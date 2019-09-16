@@ -132,14 +132,14 @@ def list_folders(path="."):
     return ret
 
 
-def check_params_json(param_json="params.json"):
+def check_params_json(param_json="./configs/params.json"):
     if not os.path.exists(param_json):
         param_data = {}
         with open(param_json, 'w') as param_file:
             json.dump(param_data, param_file)
 
 
-def read_params(params_json="params.json"):
+def read_params(params_json="./configs/params.json"):
     check_params_json(params_json)
     return json.loads(open(params_json).read())
 

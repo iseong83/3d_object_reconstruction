@@ -146,7 +146,7 @@ def setup_dir():
         utils.make_dir(d)
 
     # IS: seems not necessary
-    utils.check_params_json("params.json")
+    #utils.check_params_json("params.json")
 
 
 def construct_file_path_list_from_dir(dir, file_filter):
