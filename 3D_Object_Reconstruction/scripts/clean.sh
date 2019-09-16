@@ -1,1 +1,0 @@
-sh scripts/clean_models.sh

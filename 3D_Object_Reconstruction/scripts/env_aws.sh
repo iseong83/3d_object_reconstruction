@@ -1,1 +1,0 @@
-source scripts/activate tensorflow_p36
