@@ -145,6 +145,7 @@ def setup_dir():
     for d in DIR.values():
         utils.make_dir(d)
 
+    # IS: seems not necessary
     utils.check_params_json("params.json")
 
 
