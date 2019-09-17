@@ -126,7 +126,8 @@ def block_residual_encoder(sequence, in_featuremap_count, out_featuremap_count, 
             out = relu2
 
         if K_3 != 0:
-            conv3 = conv_sequence(out, out_featuremap_count,
+            # Fixed: the original code applied the skip connection only after the last conv layer
+            conv3 = conv_sequence(sequence, in_featuremap_count,
                                   out_featuremap_count, K=K_3, D=D, initializer=init)
             out = conv3 + relu2
 
@@ -138,7 +139,7 @@ def block_residual_encoder(sequence, in_featuremap_count, out_featuremap_count, 
 
 
 def block_dilated_encoder(sequence, in_featuremap_count, out_featuremap_count,  K_1=3, K_2=3, K_3=1, D=[1, 1, 1, 1], initializer=None, pool=True):
-    with tf.name_scope("block_residual_encoder"):
+    with tf.name_scope("block_dilated_encoder"):
         if initializer is None:
             init = tf.contrib.layers.xavier_initializer()
         else:
@@ -201,8 +202,13 @@ class Residual_Encoder:
             # convolution stack
             N = len(feature_map_count)
             for i in range(1, N):
-                cur_tensor = block_residual_encoder(
-                    cur_tensor, feature_map_count[i-1], feature_map_count[i], initializer=init)
+                if i == 3:
+                    # the original paper doesn't applied the skip connection in this step
+                    cur_tensor = block_residual_encoder(
+                            cur_tensor, feature_map_count[i-1], feature_map_count[i], K_3=0, initializer=init)
+                else:
+                    cur_tensor = block_residual_encoder(
+                            cur_tensor, feature_map_count[i-1], feature_map_count[i], initializer=init)
 
             # final block
             flat = flatten_sequence(cur_tensor)

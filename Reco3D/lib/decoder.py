@@ -3,6 +3,7 @@ from Reco3D.lib import utils
 
 
 def conv_vox(vox, in_featurevoxel_count, out_featurevoxel_count, K=3, S=[1, 1, 1, 1, 1], D=[1, 1, 1, 1, 1], initializer=None, P="SAME"):
+    # deconvolution
     with tf.name_scope("conv_vox"):
         if initializer is None:
             init = tf.contrib.layers.xavier_initializer()
@@ -107,7 +108,8 @@ def block_residual_decoder(vox, in_featurevoxel_count, out_featurevoxel_count, K
             out = relu2
 
         if K_3 != 0:
-            conv3 = conv_vox(out, out_featurevoxel_count,
+            # Fixed: the original code applied the skip connection only after the last conv layer
+            conv3 = conv_vox(vox, in_featurevoxel_count,
                              out_featurevoxel_count, K=K_3, D=D, initializer=init)
             out = conv3 + relu2
 
@@ -175,6 +177,7 @@ class Simple_Decoder:
             cur_tensor = unpool_vox(hidden_state)
             cur_tensor = block_simple_decoder(
                 cur_tensor, hidden_shape[-1], feature_vox_count[0], initializer=init)
+            # the original paper implemented this part little differently. But, just keep the current network
             for i in range(1, N-1):
                 unpool = True if i <= 2 else False
                 cur_tensor = block_simple_decoder(

@@ -3,7 +3,7 @@
     "DATASET_SIZE": 10,
     "TRAIN": {
         "BATCH_SIZE": 2,
-        "EPOCH_COUNT": 10,
+        "EPOCH_COUNT": 1,
         "TIME_STEP_COUNT": "RANDOM",
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
