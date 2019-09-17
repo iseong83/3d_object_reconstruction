@@ -46,10 +46,11 @@ def is_epoch_dir(epoch_dir):
 def get_latest_epoch_index(model_dir):
     if is_epoch_dir(model_dir):
         model_dir = os.path.dirname(model_dir)
-    i = 0
-    while os.path.exists(os.path.join(model_dir, "epoch_{}".format(i))):
-        i += 1
-    return i-1
+    # IS: Modified to get the lastest epoch wihtout loop
+    folder_list = sorted(next(os.walk(model_dir))[1], reverse=True)
+    if not 'epoch' in folder_list[0]:
+        return -1
+    return int(folder_list[0].split('_')[1])
 
 
 def get_latest_epoch(model_dir):
