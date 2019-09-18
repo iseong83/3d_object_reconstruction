@@ -219,6 +219,19 @@ def download_dataset():
     if not os.path.isdir("data/ShapeNetRendering"):
         download_from_link(DATA_LINK)
 
+# download data from s3 bucket
+def download_from_s3_folder(s3_bucket='shapenetv1'):
+    s3_bucket_name = 'shapenetv1'
+    s3 = boto3.resource('s3')
+    print ("Downloading the data {} from s3 to {}".format("shapenetv1.tar", "./data"))
+    s3.meta.client.download_file(s3_bucket, 'data/shapenetv1.tar', './data/shapenetv1.tar') 
+
+def prepare_dataset():
+    archive = 'data/shapenetv1.tar'
+    if not os.path.isfile(archive):
+        download_from_s3_folder()
+    os.system("tar -xvzf {0} -C ./data/".format(archive))
+
 
 def preprocess_dataset():
     params = utils.read_params()
