@@ -18,7 +18,7 @@ class Preprocessor():
                 n_timesteps = tf.random_uniform(
                     [], minval=1, maxval=25, dtype=tf.int32)
                 tf.summary.scalar("n_timesteps", n_timesteps)
-            elif isinstance(params["TRAIN", "TIME_STEP_COUNT"], int) and params["TRAIN"]["TIME_STEP_COUNT"] > 0:
+            elif isinstance(params["TRAIN"]["TIME_STEP_COUNT"], int) and params["TRAIN"]["TIME_STEP_COUNT"] > 0:
                 n_timesteps = params["TRAIN"]["TIME_STEP_COUNT"]
             else:
                 n_timesteps = tf.shape(X)[1]
