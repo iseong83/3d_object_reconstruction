@@ -17,6 +17,7 @@ from sklearn import model_selection
 from keras.utils import to_categorical
 from numpy.random import randint, permutation, shuffle
 from natsort import natsorted
+import boto3
 
 
 def load_obj_id(obj_id):
