@@ -56,6 +56,8 @@ class Network:
             en = encoder.Dilated_Encoder(X_preprocessed)
         elif self.params["TRAIN"]["ENCODER_MODE"] == "RESIDUAL":
             en = encoder.Residual_Encoder(X_preprocessed)
+        elif self.params["TRAIN"]["ENCODER_MODE"] == "INCEPTION":
+            en = encoder.Inception_Encoder(X_preprocessed)
         else:
             en = encoder.Simple_Encoder(X_preprocessed)
         encoded_input = en.out_tensor

@@ -59,6 +59,12 @@ def relu_sequence(sequence):
         ret = tf.map_fn(tf.nn.relu, sequence, name="relu_map")
     return ret
 
+def concat_sequence(sequence, axis=-1):
+    with tf.name_scope("concat_sequence"):
+        def concat(a): return tf.nn.concat(a, axis)
+        ret = tf.map_fn(concat, sequence, name="concat_map")
+    return ret
+
 
 def fully_connected_sequence(sequence, initializer=None):
     with tf.name_scope("fully_connected_sequence"):
@@ -103,6 +109,45 @@ def block_simple_encoder(sequence, in_featuremap_count, out_featuremap_count,  K
         pool = max_pool_sequence(conv)
         relu = relu_sequence(pool)
     return relu
+
+def block_inception_encoder(sequence, in_featuremap_count, out_featuremap_count,  K_1=3, K_2=3, K_3=1, D=[1, 1, 1, 1], initializer=None, pool=True):
+    with tf.name_scope("block_inception_encoder"):
+        if initializer is None:
+            init = tf.contrib.layers.xavier_initializer()
+        else:
+            init = initializer
+
+        out = sequence
+        # first block
+        conv1 = conv_sequence(out, in_featuremap_count,
+                              out_featuremap_count, K=1, D=D, initializer=init)
+        relu1 = relu_sequence(conv1)
+        conv1 = conv_sequence(relu1, out_featuremap_count,
+                              out_featuremap_count, K=5, D=D, initializer=init)
+        relu1 = relu_sequence(conv1)
+        # second block
+        conv2 = conv_sequence(out, in_featuremap_count,
+                              out_featuremap_count, K=1, D=D, initializer=init)
+        relu2 = relu_sequence(conv2)
+        conv2 = conv_sequence(relu2, out_featuremap_count,
+                              out_featuremap_count, K=3, D=D, initializer=init)
+        relu2 = relu_sequence(conv2)
+        # third block
+        pool3 = max_pool_sequence(out, K=[1,3,3,1],S=[1,1,1,1])
+        conv3 = conv_sequence(pool3, in_featuremap_count,
+                              out_featuremap_count, K=1, D=D, initializer=init)
+        relu3 = relu_sequence(conv3)
+        # fourth block
+        conv4 = conv_sequence(out, in_featuremap_count,
+                              out_featuremap_count, K=1, D=D, initializer=init)
+        relu4 = relu_sequence(conv4)
+        # concat
+        #_list = [relu1, relu2, relu3, relu4]
+        #out = concat_sequence(relu1)
+        out = relu1
+
+        return out
+
 
 
 def block_residual_encoder(sequence, in_featuremap_count, out_featuremap_count,  K_1=3, K_2=3, K_3=1, D=[1, 1, 1, 1], initializer=None, pool=True):
@@ -164,6 +209,28 @@ def block_dilated_encoder(sequence, in_featuremap_count, out_featuremap_count,  
             out = conv3 + relu2
 
         return out
+
+class Inception_Encoder:
+    def __init__(self, sequence, feature_map_count=[96, 128, 256, 256, 256, 256], initializer=None):
+        with tf.name_scope("Inception_Encoder"):
+            if initializer is None:
+                init = tf.contrib.layers.xavier_initializer()
+            else:
+                init = initializer
+
+            cur_tensor = block_simple_encoder(
+                sequence, 3, feature_map_count[0], K=7, initializer=init)
+            # convolution stack
+            N = len(feature_map_count)
+            for i in range(1, N):
+                cur_tensor = block_inception_encoder(
+                        cur_tensor, feature_map_count[i-1], feature_map_count[i], initializer=init)
+
+            # final block
+            flat = flatten_sequence(cur_tensor)
+            fc0 = fully_connected_sequence(flat)
+            self.out_tensor = relu_sequence(fc0)
+
 
 
 class Simple_Encoder:
