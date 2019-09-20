@@ -81,16 +81,16 @@ if __name__ == '__main__':
                 counter += 1
                 if X_val_batchs and counter >= val_interval:
                     counter = 0
-                    X_batch = X_val_batchs.popleft()
-                    y_batch = y_val_batchs.popleft()
-                    X, y = utils.load(X_batch), utils.load_npy(y_batch)
-                    X = preprocessor.Preprocessor(X).out_tensor
+                    X = X_val_batchs.popleft()
+                    y = y_val_batchs.popleft()
+                    #X, y = utils.load(X_batch), utils.load_npy(y_batch)
+                    #X = preprocessor.Preprocessor(X).out_tensor
                     epoch_val_loss.append(net.step(X, y, 'val'))
                 else:
-                    X_batch = X_train_batchs.popleft()
-                    y_batch = y_train_batchs.popleft()
-                    X, y = utils.load(X_batch), utils.load_npy(y_batch)
-                    X = preprocessor.Preprocessor(X).out_tensor
+                    X = X_train_batchs.popleft()
+                    y = y_train_batchs.popleft()
+                    #X, y = utils.load(X_batch), utils.load_npy(y_batch)
+                    #X = preprocessor.Preprocessor(X).out_tensor
 
                     if params["MODE"] == "DEBUG":
                         epoch_train_loss.append(net.step(X, y, 'debug'))

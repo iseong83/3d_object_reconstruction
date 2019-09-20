@@ -10,7 +10,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from datetime import datetime
-#from Reco3D.lib import preprocessor
+from Reco3D.lib import preprocessor
 from Reco3D.lib import dataset, encoder, recurrent_module, decoder, loss, vis, utils
 from tensorflow.python import debug as tf_debug
 
@@ -48,8 +48,7 @@ class Network:
         pp = preprocessor.Preprocessor(self.X)
         X_preprocessed = pp.out_tensor
         #X_preprocessed = self.X
-        #n_batchsize = tf.shape(X_preprocessed)[0]
-        print ('->', X_preprocessed)
+        n_batchsize = tf.shape(X_preprocessed)[0]
 
         # encoder
         print("encoder")
@@ -214,9 +213,9 @@ class Network:
     def step(self, data, label, step_type):
         utils.make_dir(self.MODEL_DIR)
         cur_dir = self.get_cur_epoch_dir()
-        #data_npy, label_npy = utils.load_npy(data), utils.load_npy(label)
-        #feed_dict = {self.X: data_npy, self.Y_onehot: label_npy}
-        feed_dict = {self.X: data, self.Y_onehot: label}
+        data_npy, label_npy = utils.load_npy(data), utils.load_npy(label)
+        feed_dict = {self.X: data_npy, self.Y_onehot: label_npy}
+        #feed_dict = {self.X: data, self.Y_onehot: label}
 
         if step_type == "train":
             fetches = [self.apply_grad, self.loss, self.summary_op,

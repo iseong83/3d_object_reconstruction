@@ -1,6 +1,6 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 1,
+    "DATASET_SIZE": 10,
     "TRAIN": {
         "BATCH_SIZE": 2,
         "EPOCH_COUNT": 1,
