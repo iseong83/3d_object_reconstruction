@@ -9,7 +9,10 @@ Since the official source code ([link](https://github.com/chrischoy/3D-R2N2.git)
 - [ ] Make a test script to run the model with test images
 
 # How to run
-For now, it needs to run in the `debug_network` branch. Install the requiements
+Following the framework [here](https://github.com/micmelesse/3D-reconstruction-with-Neural-Networks.git). For now, it needs to run in the `debug_network` branch. 
+Change the branch
+`git checkout debug_network`
+Install the requiements
 ```
 pip install -r requirements.txt
 ```
@@ -17,7 +20,7 @@ Create directories
 ```
 sh build/setup_dir.sh
 ```
-Download ShapeNet data (chair only)
+Download and preprocess ShapeNet data (chair only) from S3
 ```
 sh build/preprocess_dataset.sh
 ```
@@ -25,5 +28,4 @@ To run the training,
 ```
 python run.py
 ```
-Please check the parameters of the training in `configs/params.json`
-
+Training parameters are stored in `configs/params.json`

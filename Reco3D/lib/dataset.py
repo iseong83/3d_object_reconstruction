@@ -227,13 +227,13 @@ def download_from_s3_folder(s3_bucket='shapenetv1'):
     #print ("Downloading the data {} from s3 to {}".format("shapenetv1.tar", "./data"))
     #s3.meta.client.download_file(s3_bucket, 'data/shapenetv1.tar', './data/shapenetv1.tar') 
     LINK = 'https://shapenetv1.s3-us-west-2.amazonaws.com/data/shapenetv1.tar'
-    download_from_link(LINK)
+    os.system('wget -c {0} -P ./data'.format(LINK))
 
 def prepare_dataset():
     archive = 'data/shapenetv1.tar'
     if not os.path.isfile(archive) and not os.path.isdir("data/ShapeNetVox32"):
         download_from_s3_folder()
-    if not os.path.isdir("data/ShapeNetVox32") :
+    if not os.path.isdir("data/ShapeNetVox32") or os.path.isdir('data/ShapeNetRendering') :
         os.system("tar -xvzf {0} -C ./data/".format(archive))
 
 
