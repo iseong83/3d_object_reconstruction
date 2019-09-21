@@ -7,3 +7,23 @@ Since the official source code ([link](https://github.com/chrischoy/3D-R2N2.git)
 - [ ] Decide dataset: a single category only? or train with multiple categories
 - [ ] Need to add a script to pull data from S3
 - [ ] Make a test script to run the model with test images
+
+# How to run
+For now, it needs to run in the `debug_network` branch. Install the requiements
+```
+pip install -r requirements.txt
+```
+Create directories
+```
+sh build/setup_dir.sh
+```
+Download ShapeNet data (chair only)
+```
+sh build/preprocess_dataset.sh
+```
+To run the training,
+```
+python run.py
+```
+Please check the parameters of the training in `configs/params.json`
+

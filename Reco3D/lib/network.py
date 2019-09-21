@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from Reco3D.lib import preprocessor
 from Reco3D.lib import dataset, encoder, recurrent_module, decoder, loss, vis, utils
+from Reco3D.lib import metrics
 from tensorflow.python import debug as tf_debug
 
 

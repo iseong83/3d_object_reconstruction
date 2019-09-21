@@ -222,10 +222,12 @@ def download_dataset():
 
 # download data from s3 bucket
 def download_from_s3_folder(s3_bucket='shapenetv1'):
-    s3_bucket_name = 'shapenetv1'
-    s3 = boto3.resource('s3')
-    print ("Downloading the data {} from s3 to {}".format("shapenetv1.tar", "./data"))
-    s3.meta.client.download_file(s3_bucket, 'data/shapenetv1.tar', './data/shapenetv1.tar') 
+    #s3_bucket_name = 'shapenetv1'
+    #s3 = boto3.resource('s3')
+    #print ("Downloading the data {} from s3 to {}".format("shapenetv1.tar", "./data"))
+    #s3.meta.client.download_file(s3_bucket, 'data/shapenetv1.tar', './data/shapenetv1.tar') 
+    LINK = 'https://shapenetv1.s3-us-west-2.amazonaws.com/data/shapenetv1.tar'
+    download_from_link(LINK)
 
 def prepare_dataset():
     archive = 'data/shapenetv1.tar'

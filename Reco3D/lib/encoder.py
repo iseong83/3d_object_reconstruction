@@ -165,6 +165,24 @@ def block_dilated_encoder(sequence, in_featuremap_count, out_featuremap_count,  
         return out
 
 
+def block_se_encoder(sequence, out_feature_map_count, ratio):
+    # sequeeze excitation encoder (SENet)
+    with tf.name_scope("block_se_encoder") :
+        out = sequence
+        
+
+        squeeze = Global_Average_Pooling(input_x)
+        excitation = Fully_connected(squeeze, units=out_dim / ratio, layer_name=layer_name+'_fully_connected1')
+        excitation = Relu(excitation)
+        excitation = Fully_connected(excitation, units=out_dim, layer_name=layer_name+'_fully_connected2')
+        excitation = Sigmoid(excitation)
+
+        excitation = tf.reshape(excitation, [-1,1,1,out_dim])
+        scale = input_x * excitation
+
+        return scale
+
+
 class Simple_Encoder:
     def __init__(self, sequence, feature_map_count=[96, 128, 256, 256, 256, 256], initializer=None):
         with tf.name_scope("Simple_Encoder"):
@@ -236,3 +254,25 @@ class Dilated_Encoder:
             flat = flatten_sequence(cur_tensor)
             fc0 = fully_connected_sequence(flat)
             self.out_tensor = relu_sequence(fc0)
+
+class SENet_Encoder:
+    def __init__(self, sequence, feature_map_count=[96, 128, 256, 256, 256, 256], initializer=None):
+        with tf.name_scope("Simple_Encoder"):
+            if initializer is None:
+                init = tf.contrib.layers.xavier_initializer()
+            else:
+                init = initializer
+
+            N = len(feature_map_count)
+            # convolution stack
+            cur_tensor = block_residual_encoder(
+                sequence, 3, feature_map_count[0], K_1=7, K_2=3, K_3=0, initializer=init)
+            for i in range(1, N):
+                cur_tensor = block_simple_encoder(
+                    cur_tensor, feature_map_count[i-1], feature_map_count[i], initializer=init)
+
+            # final block
+            flat = flatten_sequence(cur_tensor)
+            fc0 = fully_connected_sequence(flat)
+            self.out_tensor = relu_sequence(fc0)
+

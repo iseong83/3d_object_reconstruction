@@ -1,8 +1,7 @@
 # To install these Python dependencies, please type:
 # pip install -r requirements.txt
 trimesh
-scikit-image
+scikit-image==0.14.2
 natsort
 keyboard
-imageo
-movipy
+movipy==0.2.3.5
