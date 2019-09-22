@@ -1,7 +1,6 @@
 import tensorflow as tf
 from Reco3D.lib import utils
 
-
 def conv_vox(vox, in_featurevoxel_count, out_featurevoxel_count, K=3, S=[1, 1, 1, 1, 1], D=[1, 1, 1, 1, 1], initializer=None, P="SAME"):
     # deconvolution
     with tf.name_scope("conv_vox"):
@@ -118,6 +117,31 @@ def block_residual_decoder(vox, in_featurevoxel_count, out_featurevoxel_count, K
             out = unpool
 
     return out
+
+class SENet_Decoder:
+    def __init__(self, hidden_state, feature_vox_count=[128, 128, 128, 64, 32, 2], initializer=None):
+        with tf.name_scope("SENet_Decoder"):
+            if initializer is None:
+                init = tf.contrib.layers.xavier_initializer()
+            else:
+                init = initializer
+
+            N = len(feature_vox_count)
+            hidden_shape = hidden_state.get_shape().as_list()
+            cur_tensor = unpool_vox(hidden_state)
+            cur_tensor = block_residual_decoder(
+                cur_tensor, hidden_shape[-1], feature_vox_count[0], initializer=init)
+            cur_tensor = block_seresnet_decoder(
+                cur_tensor, feature_vox_count[0], initializer=init)
+
+            for i in range(1, N-1):
+                unpool = True if i <= 2 else False
+                cur_tensor = block_residual_decoder(
+                    cur_tensor, feature_vox_count[i-1], feature_vox_count[i], initializer=init, unpool=unpool)
+
+            self.out_tensor = conv_vox(
+                cur_tensor, feature_vox_count[-2], feature_vox_count[-1], initializer=init)
+
 
 
 class Residual_Decoder:
