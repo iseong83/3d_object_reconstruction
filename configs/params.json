@@ -12,7 +12,7 @@
         "VALIDATION_INTERVAL": 25,
         "SHUFFLE_IMAGE_SEQUENCE": false,
         "INITIALIZER": "XAVIER",
-        "ENCODER_MODE": "RESIDUAL",
+        "ENCODER_MODE": "SERESNET",
         "DECODER_MODE": "RESIDUAL",
         "RNN_MODE": "LSTM",
         "RNN_HIDDEN_SIZE": 128,

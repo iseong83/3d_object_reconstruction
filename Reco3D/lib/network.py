@@ -49,7 +49,7 @@ class Network:
         pp = preprocessor.Preprocessor(self.X)
         X_preprocessed = pp.out_tensor
         #X_preprocessed = self.X
-        n_batchsize = tf.shape(X_preprocessed)[0]
+        n_batchsize = tf.shape(X_preprocessed)[0] 
 
         # encoder
         print("encoder")
@@ -57,6 +57,8 @@ class Network:
             en = encoder.Dilated_Encoder(X_preprocessed)
         elif self.params["TRAIN"]["ENCODER_MODE"] == "RESIDUAL":
             en = encoder.Residual_Encoder(X_preprocessed)
+        elif self.params["TRAIN"]["ENCODER_MODE"] == "SERESNET":
+            en = encoder.SENet_Encoder(X_preprocessed)
         else:
             en = encoder.Simple_Encoder(X_preprocessed)
         encoded_input = en.out_tensor

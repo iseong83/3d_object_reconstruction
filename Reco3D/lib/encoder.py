@@ -1,7 +1,30 @@
 import tensorflow as tf
 import numpy as np
+import os
 from Reco3D.lib import utils
 from numpy.random import choice
+
+def map_images(fcn, sequence, name):
+    with tf.name_scope(name):
+        out = list()
+        for i in range(sequence.get_shape()[1]):
+            out.append(fcn(sequence[:,i,...]))
+        return tf.stack(out,axis=1)
+
+def batch_normalization(sequence, training):
+    with tf.name_scope('batch_normalization'):
+        with tf.contrib.framework.arg_scope([tf.contrib.layers.batch_norm],
+             updates_collections=None,
+             decay=0.9,
+             center=True,
+             scale=True,
+             zero_debias_moving_mean=True) :
+                 reuse = None
+                 if not training : reuse = True
+                 def batch_norm(x):
+                     return tf.contrib.layers.batch_norm(inputs=x, is_training=training, reuse=reuse)
+                 out = map_images(batch_norm, sequence, name='batch_norm')
+                 return out
 
 
 def conv_sequence(sequence, in_featuremap_count, out_featuremap_count, initializer=None, K=3, S=[1, 1, 1, 1], D=[1, 1, 1, 1], P="SAME"):
@@ -17,7 +40,9 @@ def conv_sequence(sequence, in_featuremap_count, out_featuremap_count, initializ
 
         def conv2d(x): return tf.nn.bias_add(tf.nn.conv2d(
             x, kernel, S, padding=P, dilations=D, name="conv2d"), bias)
-        ret = tf.map_fn(conv2d, sequence, name="conv2d_map")
+        #ret = tf.map_fn(conv2d, sequence, name="conv2d_map")
+        #fixed wrong loop
+        ret = map_images(conv2d, sequence, name='conv2d_map')
 
         tf.add_to_collection("feature_maps", ret)
 
@@ -49,17 +74,20 @@ def conv_sequence(sequence, in_featuremap_count, out_featuremap_count, initializ
 
 def max_pool_sequence(sequence, K=[1, 2, 2, 1], S=[1, 2, 2, 1], P="SAME"):
     with tf.name_scope("max_pool_sequence"):
-        def max_pool(a): return tf.nn.max_pool(a, K, S, padding=P)
-        ret = tf.map_fn(max_pool, sequence, name="max_pool_map")
+        def max_pool(a): 
+            return tf.nn.max_pool(a, K, S, padding=P)
+        #ret = tf.map_fn(max_pool, sequence, name="max_pool_map")
+        ret = map_images(max_pool, sequence, name='max_pool_map')
     return ret
 
 
 def relu_sequence(sequence):
     with tf.name_scope("relu_sequence"):
-        ret = tf.map_fn(tf.nn.relu, sequence, name="relu_map")
+        #ret = tf.map_fn(tf.nn.relu, sequence, name="relu_map")
+        ret = map_images(tf.nn.relu, sequence, name='relu_map')
     return ret
 
-def fully_connected_sequence(sequence, initializer=None):
+def fully_connected_sequence(sequence, in_units=1024, out_units=1024, initializer=None):
     with tf.name_scope("fully_connected_sequence"):
         if initializer is None:
             init = tf.contrib.layers.xavier_initializer()
@@ -67,26 +95,29 @@ def fully_connected_sequence(sequence, initializer=None):
             init = initializer
 
         weights = tf.Variable(
-            init([1024, 1024]), name="weights")
-        bias = tf.Variable(init([1024]), name="bias")
-
+            init([in_units, out_units]), name="weights")
+        bias = tf.Variable(init([out_units]), name="bias")
         def forward_pass(a): return tf.nn.bias_add(
             tf.matmul(a, weights), bias)
 
-        ret = tf.map_fn(forward_pass, sequence, name='fully_connected_map')
+        #ret = tf.map_fn(forward_pass, sequence, name='fully_connected_map')
+        ret = map_images(forward_pass, sequence, name='fully_connected_map')
 
         params = utils.read_params()
         if params["VIS"]["HISTOGRAMS"]:
             tf.summary.histogram("weights", weights)
             tf.summary.histogram("bias", bias)
-
+        if params["VIS"]["SHAPES"]:
+            print(ret.shape)
+ 
     return ret
 
 
 def flatten_sequence(sequence):
     with tf.name_scope("flatten_sequence"):
-        ret = tf.map_fn(
-            tf.contrib.layers.flatten,  sequence, name="flatten_map")
+        #ret = tf.map_fn(
+        #    tf.contrib.layers.flatten,  sequence, name="flatten_map")
+        ret = map_images(tf.contrib.layers.flatten, sequence, name='flatten_map')
     return ret
 
 
@@ -164,23 +195,80 @@ def block_dilated_encoder(sequence, in_featuremap_count, out_featuremap_count,  
 
         return out
 
+def fc_sequence(sequence, units):
+    with tf.name_scope('fc_sequence'):
+        def dense(x):
+            return tf.layers.dense(inputs=x, use_bias=False, units=units)
+        return map_images(dense, sequence, name='fc_map')
 
-def block_se_encoder(sequence, out_feature_map_count, ratio):
+
+def transition_layer(sequence, out_featuremap_count, init):
+    with tf.name_scope('transition_layer'):
+        conv1 = conv_sequence(sequence, out_featuremap_count, out_featuremap_count, K=1, initializer=init)
+        out = batch_normalization(conv1, training=True)
+        return out
+
+def global_average_pooling(sequence):
+    with tf.name_scope('global_average_pooling'):
+        def global_avg_pool(x):
+            return tf.reduce_mean(x, axis=[1,2])
+        return map_images(global_avg_pool, sequence, name='global_avg_pool')
+
+def sigmoid_sequence(sequence):
+    with tf.name_scope('sigmoid_sequence'):
+        def sigmoid(x):
+            return tf.nn.sigmoid(x)
+        return map_images(sigmoid, sequence, name='sigmod_map')
+
+
+def block_seresnet_encoder(sequence, out_featuremap_count, ratio=4, initializer=None, pool=True):
     # sequeeze excitation encoder (SENet)
-    with tf.name_scope("block_se_encoder") :
+    with tf.name_scope('block_seresnet_encoder') :
         out = sequence
-        
+        out = transition_layer(out, out_featuremap_count, init=initializer)
+        squeeze = global_average_pooling(out)
 
-        squeeze = Global_Average_Pooling(input_x)
-        excitation = Fully_connected(squeeze, units=out_dim / ratio, layer_name=layer_name+'_fully_connected1')
-        excitation = Relu(excitation)
-        excitation = Fully_connected(excitation, units=out_dim, layer_name=layer_name+'_fully_connected2')
-        excitation = Sigmoid(excitation)
+        excitation = fully_connected_sequence(squeeze, in_units=out_featuremap_count, out_units=out_featuremap_count//ratio)
+        excitation = relu_sequence(excitation)
+        excitation = fully_connected_sequence(excitation, in_units=out_featuremap_count//ratio, out_units=out_featuremap_count)
+        excitation = sigmoid_sequence(excitation)
+        excitation = tf.reshape(excitation, [-1,out.get_shape()[1],1,1,out_featuremap_count])
+        print ("---->", np.shape(out), np.shape(excitation))
+        scale = out * excitation
+        return relu_sequence(sequence+scale)
 
-        excitation = tf.reshape(excitation, [-1,1,1,out_dim])
-        scale = input_x * excitation
 
-        return scale
+# SEResNet
+class SENet_Encoder:
+    def __init__(self, sequence, feature_map_count=[96, 128, 256, 256, 256, 256], initializer=None):
+        with tf.name_scope("Simple_Encoder"):
+            if initializer is None:
+                init = tf.contrib.layers.xavier_initializer()
+            else:
+                init = initializer
+
+            N = len(feature_map_count)
+            # convolution stack
+            cur_tensor = block_residual_encoder(
+                sequence, 3, feature_map_count[0], K_1=7, K_2=3, K_3=0, initializer=init, pool=False)
+
+            cur_tensor = block_seresnet_encoder(
+                cur_tensor, feature_map_count[0], initializer=init)
+            for i in range(1, N):
+                if i == 3:
+                    # the original paper doesn't applied the skip connection in this step
+                    cur_tensor = block_residual_encoder(
+                            cur_tensor, feature_map_count[i-1], feature_map_count[i], K_3=0, initializer=init)
+                else:
+                    cur_tensor = block_residual_encoder(
+                            cur_tensor, feature_map_count[i-1], feature_map_count[i], initializer=init)
+                cur_tensor = block_seresnet_encoder(
+                     cur_tensor, feature_map_count[i], initializer=init)
+
+            # final block
+            flat = flatten_sequence(cur_tensor, )
+            fc0 = fully_connected_sequence(flat, in_units=4096)
+            self.out_tensor = relu_sequence(fc0)
 
 
 class Simple_Encoder:
@@ -255,24 +343,4 @@ class Dilated_Encoder:
             fc0 = fully_connected_sequence(flat)
             self.out_tensor = relu_sequence(fc0)
 
-class SENet_Encoder:
-    def __init__(self, sequence, feature_map_count=[96, 128, 256, 256, 256, 256], initializer=None):
-        with tf.name_scope("Simple_Encoder"):
-            if initializer is None:
-                init = tf.contrib.layers.xavier_initializer()
-            else:
-                init = initializer
-
-            N = len(feature_map_count)
-            # convolution stack
-            cur_tensor = block_residual_encoder(
-                sequence, 3, feature_map_count[0], K_1=7, K_2=3, K_3=0, initializer=init)
-            for i in range(1, N):
-                cur_tensor = block_simple_encoder(
-                    cur_tensor, feature_map_count[i-1], feature_map_count[i], initializer=init)
-
-            # final block
-            flat = flatten_sequence(cur_tensor)
-            fc0 = fully_connected_sequence(flat)
-            self.out_tensor = relu_sequence(fc0)
 
