@@ -9,44 +9,61 @@ def map_images(fcn, sequence, name):
         out = list()
         for i in range(sequence.get_shape()[1]):
             out.append(fcn(sequence[:,i,...]))
-        return tf.stack(out,axis=1)
+        ret = tf.stack(out,axis=1)
+    return ret
 
 # fully connected layer using the dense function and no bias
 def fc_sequence(sequence, units):
     with tf.name_scope('fc_sequence'):
         def dense(x):
             return tf.layers.dense(inputs=x, use_bias=False, units=units)
-        return map_images(dense, sequence, name='fc_map')
+        ret = map_images(dense, sequence, name='fc_map')
+    return ret
 
 # global averaging pooling
 def global_average_pooling(sequence):
     with tf.name_scope('global_average_pooling'):
         def global_avg_pool(x):
             return tf.reduce_mean(x, axis=[1,2]) # [1,2] = [H, W] of image
-        return map_images(global_avg_pool, sequence, name='global_avg_pool')
+        ret = map_images(global_avg_pool, sequence, name='global_avg_pool')
+    return ret
 
 # sigmoid function 
 def sigmoid_sequence(sequence):
     with tf.name_scope('sigmoid_sequence'):
         def sigmoid(x):
             return tf.nn.sigmoid(x)
-        return map_images(sigmoid, sequence, name='sigmod_map')
+        ret = map_images(sigmoid, sequence, name='sigmod_map')
+    return ret
 
 # batch normalization
-def batch_normalization(sequence, training):
+def batch_normalization(sequence, out_featuremap_count, training):
     with tf.name_scope('batch_normalization'):
-        with tf.contrib.framework.arg_scope([tf.contrib.layers.batch_norm],
-             updates_collections=None,
-             decay=0.9,
-             center=True,
-             scale=True,
-             zero_debias_moving_mean=True) :
-                 reuse = None
-                 if not training : reuse = True
-                 def batch_norm(x):
-                     return tf.contrib.layers.batch_norm(inputs=x, is_training=training, reuse=reuse)
-                 out = map_images(batch_norm, sequence, name='batch_norm')
-                 return out
+        beta = tf.Variable(tf.constant(0.0, shape=[out_featuremap_count]),
+                                     name='beta', trainable=training)
+        gamma = tf.Variable(tf.constant(1.0, shape=[out_featuremap_count]),
+                                      name='gamma', trainable=training)
+        ema = tf.train.ExponentialMovingAverage(decay=0.9)
+        def batch_norm(x):
+            batch_mean, batch_var = tf.nn.moments(x, [0,1,2], name='moments')
+            def mean_var_with_update():
+                ema_apply_op = ema.apply([batch_mean, batch_var])
+                with tf.control_dependencies([ema_apply_op]):
+                    return tf.identity(batch_mean), tf.identity(batch_var)
+            mean, var = tf.cond(tf.cast(training, tf.bool),
+                                mean_var_with_update,
+                                lambda: (ema.average(batch_mean), ema.average(batch_var)))
+            normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
+            return normed
+        ret = map_images(batch_norm, sequence, name='batch_norm')
+        #reuse = None
+        #if not training : reuse = True
+        #def batch_norm(x):
+        #    return tf.contrib.layers.batch_norm(inputs=x, is_training=training, reuse=reuse,
+        #            updates_collections=None, decay=0.9, 
+        #            center=True, scale=True, zero_debias_moving_mean=True)
+        #ret = map_images(batch_norm, sequence, name='batch_norm')
+    return ret
 
 
 def conv_sequence(sequence, in_featuremap_count, out_featuremap_count, initializer=None, K=3, S=[1, 1, 1, 1], D=[1, 1, 1, 1], P="SAME"):
@@ -150,8 +167,8 @@ def flatten_sequence(sequence):
 def transition_layer(sequence, out_featuremap_count, init):
     with tf.name_scope('transition_layer'):
         conv1 = conv_sequence(sequence, out_featuremap_count, out_featuremap_count, K=1, initializer=init)
-        out = batch_normalization(conv1, training=True)
-        return out
+        ret = batch_normalization(conv1, out_featuremap_count, training=True)
+    return ret
 
 
 def block_seresnet_encoder(sequence, out_featuremap_count, ratio=4, initializer=None, pool=True):
@@ -162,13 +179,15 @@ def block_seresnet_encoder(sequence, out_featuremap_count, ratio=4, initializer=
         squeeze = global_average_pooling(out)
 
         excitation = fully_connected_sequence(squeeze, in_units=out_featuremap_count, out_units=out_featuremap_count//ratio)
+        #excitation = fc_sequence(squeeze, units=out_featuremap_count//ratio)
         excitation = relu_sequence(excitation)
         excitation = fully_connected_sequence(excitation, in_units=out_featuremap_count//ratio, out_units=out_featuremap_count)
+        #excitation = fc_sequence(excitation, units=out_featuremap_count)
         excitation = sigmoid_sequence(excitation)
         excitation = tf.reshape(excitation, [-1,out.get_shape()[1],1,1,out_featuremap_count])
         scale = out * excitation
-        return relu_sequence(sequence+scale)
-
+        ret = relu_sequence(sequence+scale)
+    return ret
 
 
 def block_simple_encoder(sequence, in_featuremap_count, out_featuremap_count,  K=3, D=[1, 1, 1, 1], initializer=None):

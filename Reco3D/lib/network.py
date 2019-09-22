@@ -124,6 +124,8 @@ class Network:
             de = decoder.Dilated_Decoder(hidden_state)
         elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL":
             de = decoder.Residual_Decoder(hidden_state)
+        elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET":
+            de = decoder.SENet_Decoder(hidden_state)
         else:
             de = decoder.Simple_Decoder(hidden_state)
         self.logits = de.out_tensor

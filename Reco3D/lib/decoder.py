@@ -1,6 +1,19 @@
 import tensorflow as tf
 from Reco3D.lib import utils
 
+def batch_normalization_vox(vox, training):
+    with tf.name_scope('batch_normalization_vox'):
+        with tf.contrib.framework.arg_scope([tf.contrib.layers.batch_norm],
+             updates_collections=None,
+             decay=0.9,
+             center=True,
+             scale=True,
+             zero_debias_moving_mean=True) :
+                 reuse = None
+                 if not training : reuse = True
+                 ret = tf.contrib.layers.batch_norm(inputs=vox, is_training=training, reuse=reuse, scope='batch_norm_vox')
+    return ret
+
 def conv_vox(vox, in_featurevoxel_count, out_featurevoxel_count, K=3, S=[1, 1, 1, 1, 1], D=[1, 1, 1, 1, 1], initializer=None, P="SAME"):
     # deconvolution
     with tf.name_scope("conv_vox"):
@@ -67,6 +80,49 @@ def relu_vox(vox):
     with tf.name_scope("relu_vox"):
         ret = tf.nn.relu(vox, name="relu")
     return ret
+
+def sigmoid_vox(vox):
+    with tf.name_scope("sigmoid_vox"):
+        ret = tf.nn.sigmoid(vox, name='sigmoid')
+    return ret
+
+# global averaging pooling
+def global_average_pooling(vox):
+    with tf.name_scope('global_average_pooling'):
+        ret = tf.reduce_mean(vox, axis=[1,2,3], name='global_avg_pool_vox') 
+    return ret
+
+def transition_vox(vox, out_featurevoxel_count, init):
+    with tf.name_scope('transition_vox'):
+        conv1 = conv_vox(vox, out_featurevoxel_count, out_featurevoxel_count, K=1, initializer=init)
+        ret = batch_normalization_vox(conv1, training=True)
+    return ret
+
+# fully connected layer using the dense function and no bias
+def fc_vox(vox, units):
+    with tf.name_scope('fc_vox'):
+        ret = tf.layers.dense(inputs=vox, use_bias=False, units=units, name='fc')
+    return ret
+
+def block_seresnet_decoder(vox, out_featurevoxel_count, ratio=4, initializer=None, pool=True):
+    # sequeeze excitation decoder (SENet)
+    with tf.name_scope('block_seresnet_decoder') :
+        out = vox
+        out = transition_vox(out, out_featurevoxel_count, init=initializer)
+        print ('1--->', out.get_shape())
+        squeeze = global_average_pooling(out)
+        print ('2--->', squeeze.get_shape())
+
+        excitation = fc_vox(squeeze, units=out_featurevoxel_count//ratio)
+        print ('3--->', excitation.get_shape())
+        excitation = relu_vox(excitation)
+        print ('4--->', excitation.get_shape())
+        excitation = fc_vox(excitation, units=out_featurevoxel_count)
+        print ('5--->', excitation.get_shape())
+        excitation = sigmoid_vox(excitation)
+        excitation = tf.reshape(excitation, [-1,1,1,1,out_featurevoxel_count])
+        scale = out * excitation
+        return relu_vox(vox+scale)
 
 
 def block_simple_decoder(vox, in_featurevoxel_count, out_featurevoxel_count, K=3, D=[1, 1, 1, 1, 1], initializer=None, unpool=False):
@@ -137,8 +193,10 @@ class SENet_Decoder:
             for i in range(1, N-1):
                 unpool = True if i <= 2 else False
                 cur_tensor = block_residual_decoder(
-                    cur_tensor, feature_vox_count[i-1], feature_vox_count[i], initializer=init, unpool=unpool)
-
+                    cur_tensor, feature_vox_count[i-1], feature_vox_count[i], initializer=init, unpool=False)
+                cur_tensor = block_seresnet_decoder(
+                    cur_tensor, feature_vox_count[i], initializer=init)
+                if unpool: cur_tensor = unpool_vox(cur_tensor)
             self.out_tensor = conv_vox(
                 cur_tensor, feature_vox_count[-2], feature_vox_count[-1], initializer=init)
 
