@@ -233,7 +233,7 @@ def prepare_dataset():
     archive = 'data/shapenetv1.tar'
     if not os.path.isfile(archive) and not os.path.isdir("data/ShapeNetVox32"):
         download_from_s3_folder()
-    if not os.path.isdir("data/ShapeNetVox32") or os.path.isdir('data/ShapeNetRendering') :
+    if not os.path.isdir("data/ShapeNetVox32") or not os.path.isdir('data/ShapeNetRendering') :
         os.system("tar -xvzf {0} -C ./data/".format(archive))
 
 
