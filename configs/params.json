@@ -13,7 +13,7 @@
         "SHUFFLE_IMAGE_SEQUENCE": false,
         "INITIALIZER": "XAVIER",
         "ENCODER_MODE": "SERESNET",
-        "DECODER_MODE": "RESIDUAL",
+        "DECODER_MODE": "SERESNET",
         "RNN_MODE": "LSTM",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4

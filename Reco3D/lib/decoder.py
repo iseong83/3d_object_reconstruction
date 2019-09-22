@@ -1,17 +1,24 @@
 import tensorflow as tf
 from Reco3D.lib import utils
 
-def batch_normalization_vox(vox, training):
-    with tf.name_scope('batch_normalization_vox'):
-        with tf.contrib.framework.arg_scope([tf.contrib.layers.batch_norm],
-             updates_collections=None,
-             decay=0.9,
-             center=True,
-             scale=True,
-             zero_debias_moving_mean=True) :
-                 reuse = None
-                 if not training : reuse = True
-                 ret = tf.contrib.layers.batch_norm(inputs=vox, is_training=training, reuse=reuse, scope='batch_norm_vox')
+# batch normalization
+def batch_normalization_vox(vox, out_featurevoxel_count, training):
+    with tf.name_scope('batch_normalization'):
+        beta = tf.Variable(tf.constant(0.0, shape=[out_featurevoxel_count]),
+                                     name='beta', trainable=training)
+        gamma = tf.Variable(tf.constant(1.0, shape=[out_featurevoxel_count]),
+                                      name='gamma', trainable=training)
+        ema = tf.train.ExponentialMovingAverage(decay=0.9)
+
+        batch_mean, batch_var = tf.nn.moments(vox, [0,1,2,3], name='moments')
+        def mean_var_with_update():
+            ema_apply_op = ema.apply([batch_mean, batch_var])
+            with tf.control_dependencies([ema_apply_op]):
+                return tf.identity(batch_mean), tf.identity(batch_var)
+        mean, var = tf.cond(tf.cast(training, tf.bool),
+                            mean_var_with_update,
+                            lambda: (ema.average(batch_mean), ema.average(batch_var)))
+        ret = tf.nn.batch_normalization(vox, mean, var, beta, gamma, 1e-3)
     return ret
 
 def conv_vox(vox, in_featurevoxel_count, out_featurevoxel_count, K=3, S=[1, 1, 1, 1, 1], D=[1, 1, 1, 1, 1], initializer=None, P="SAME"):
@@ -95,7 +102,7 @@ def global_average_pooling(vox):
 def transition_vox(vox, out_featurevoxel_count, init):
     with tf.name_scope('transition_vox'):
         conv1 = conv_vox(vox, out_featurevoxel_count, out_featurevoxel_count, K=1, initializer=init)
-        ret = batch_normalization_vox(conv1, training=True)
+        ret = batch_normalization_vox(conv1, out_featurevoxel_count, training=True)
     return ret
 
 # fully connected layer using the dense function and no bias
@@ -104,22 +111,44 @@ def fc_vox(vox, units):
         ret = tf.layers.dense(inputs=vox, use_bias=False, units=units, name='fc')
     return ret
 
+def fully_connected_vox(vox, in_units=1024, out_units=1024, initializer=None):
+    with tf.name_scope("fully_connected_vox"):
+        if initializer is None:
+            init = tf.contrib.layers.xavier_initializer()
+        else:
+            init = initializer
+
+        weights = tf.Variable(
+            init([in_units, out_units]), name="weights")
+        bias = tf.Variable(init([out_units]), name="bias")
+        def forward_pass(a): return tf.nn.bias_add(
+            tf.matmul(a, weights), bias)
+        ret = tf.nn.bias_add(tf.matmul(vox, weights), bias)
+
+        params = utils.read_params()
+        if params["VIS"]["HISTOGRAMS"]:
+            tf.summary.histogram("weights", weights)
+            tf.summary.histogram("bias", bias)
+        if params["VIS"]["SHAPES"]:
+            print(ret.shape)
+ 
+    return ret
+
+
 def block_seresnet_decoder(vox, out_featurevoxel_count, ratio=4, initializer=None, pool=True):
     # sequeeze excitation decoder (SENet)
     with tf.name_scope('block_seresnet_decoder') :
         out = vox
         out = transition_vox(out, out_featurevoxel_count, init=initializer)
-        print ('1--->', out.get_shape())
+        # squeeze layer
         squeeze = global_average_pooling(out)
-        print ('2--->', squeeze.get_shape())
-
-        excitation = fc_vox(squeeze, units=out_featurevoxel_count//ratio)
-        print ('3--->', excitation.get_shape())
+        # excitation layers
+        excitation = fully_connected_vox(squeeze, in_units=out_featurevoxel_count, out_units=out_featurevoxel_count//ratio)
         excitation = relu_vox(excitation)
-        print ('4--->', excitation.get_shape())
-        excitation = fc_vox(excitation, units=out_featurevoxel_count)
-        print ('5--->', excitation.get_shape())
+
+        excitation = fully_connected_vox(excitation, in_units=out_featurevoxel_count//ratio, out_units=out_featurevoxel_count)
         excitation = sigmoid_vox(excitation)
+
         excitation = tf.reshape(excitation, [-1,1,1,1,out_featurevoxel_count])
         scale = out * excitation
         return relu_vox(vox+scale)
