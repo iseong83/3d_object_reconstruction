@@ -4,4 +4,4 @@ trimesh
 scikit-image==0.14.2
 natsort
 keyboard
-movipy==0.2.3.5
+moviepy==0.2.3.5
