@@ -49,7 +49,7 @@ def get_latest_epoch_index(model_dir):
     # Modified to get the lastest epoch even though it doesn't contain all epochs
 
     folder_list = sorted(next(os.walk(model_dir))[1], reverse=True)
-    epoch_list = sorted([int(i.split('_')[1]) for i in folder_list[2:]])
+    epoch_list = sorted([int(i.split('_')[1]) for i in folder_list[2:]], reverse=True)
     return epoch_list[0] if len(epoch_list)>0 else -1
 
 
