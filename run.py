@@ -50,8 +50,7 @@ if __name__ == '__main__':
     train_params = params["TRAIN"]
 
     # split dataset
-    X_train, y_train, X_val, y_val, X_test, y_test = dataset.train_val_test_split(
-        data, label)
+    X_train, y_train, X_val, y_val, X_test, y_test = dataset.train_val_test_split(data, label)
     save_dataset_split()
 
     print("training loop")
@@ -83,14 +82,14 @@ if __name__ == '__main__':
                     counter = 0
                     X = X_val_batchs.popleft()
                     y = y_val_batchs.popleft()
-                    #X, y = utils.load(X_batch), utils.load_npy(y_batch)
-                    #X = preprocessor.Preprocessor(X).out_tensor
+                    #X, y = utils.load(X), utils.load_npy(y) # here
+                    #X = preprocessor.Preprocessor(X).out_tensor #here
                     epoch_val_loss.append(net.step(X, y, 'val'))
                 else:
                     X = X_train_batchs.popleft()
                     y = y_train_batchs.popleft()
-                    #X, y = utils.load(X_batch), utils.load_npy(y_batch)
-                    #X = preprocessor.Preprocessor(X).out_tensor
+                    #X, y = utils.load(X), utils.load_npy(y) # here
+                    #X = preprocessor.Preprocessor(X).out_tensor # here
 
                     if params["MODE"] == "DEBUG":
                         epoch_train_loss.append(net.step(X, y, 'debug'))

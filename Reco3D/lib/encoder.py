@@ -9,6 +9,16 @@ def map_images(fcn, sequence, name):
         out = list()
         for i in range(sequence.get_shape()[1]):
             out.append(fcn(sequence[:,i,...]))
+        # tried to use while_loop instead of python for loop
+        # but, haven't figured out how I can make a stack tensor 
+        #t = tf.constant(0)
+        #def cond(t):
+        #    return tf.less(t, tf.shape(sequence)[1])
+        #def body(t):
+        #    out.append(fcn(sequence[:,t,...]))
+        #    t = tf.add(t, 1)
+        #    return [t]
+        #tf.while_loop(cond, body, [t])
         ret = tf.stack(out,axis=1)
     return ret
 

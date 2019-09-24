@@ -46,8 +46,8 @@ class Network:
             self.Y_onehot = tf.placeholder(tf.float32, [None, 32, 32, 32, 2])
 
         print ("Initializing Network")
-        pp = preprocessor.Preprocessor(self.X)
-        X_preprocessed = pp.out_tensor
+        pp = preprocessor.Preprocessor(self.X) # here
+        X_preprocessed = pp.out_tensor # here
         #X_preprocessed = self.X
         n_batchsize = tf.shape(X_preprocessed)[0] 
 
@@ -218,9 +218,9 @@ class Network:
     def step(self, data, label, step_type):
         utils.make_dir(self.MODEL_DIR)
         cur_dir = self.get_cur_epoch_dir()
-        data_npy, label_npy = utils.load_npy(data), utils.load_npy(label)
-        feed_dict = {self.X: data_npy, self.Y_onehot: label_npy}
-        #feed_dict = {self.X: data, self.Y_onehot: label}
+        data_npy, label_npy = utils.load_npy(data), utils.load_npy(label) # here
+        #data_npy, label_npy = data, label
+        feed_dict = {self.X: data_npy, self.Y_onehot: label_npy} 
 
         if step_type == "train":
             fetches = [self.apply_grad, self.loss, self.summary_op,
@@ -326,7 +326,7 @@ class Network_restored:
                     n = len(op.inputs[0].shape)
                 if name in op.name and n == ndim:
                     ret = op.name+":0"
-                    print(ret)
+                    #print(ret)
                     return ret
             except:
                 pass
