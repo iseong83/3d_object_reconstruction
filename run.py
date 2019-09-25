@@ -82,14 +82,17 @@ if __name__ == '__main__':
                     counter = 0
                     X = X_val_batchs.popleft()
                     y = y_val_batchs.popleft()
-                    X, y = utils.load_npy(X), utils.load_npy(y) # here
-                    X = preprocessor.Preprocessor_npy(X).out_tensor #here
+                    # load data and preprocess
+                    X, y = utils.load_npy(X), utils.load_npy(y)
+                    X = preprocessor.Preprocessor_npy(X).out_tensor 
                     epoch_val_loss.append(net.step(X, y, 'val'))
                 else:
                     X = X_train_batchs.popleft()
                     y = y_train_batchs.popleft()
-                    X, y = utils.load_npy(X), utils.load_npy(y) # here
-                    X = preprocessor.Preprocessor_npy(X).out_tensor # here
+                    # load data and preprocess
+                    # crop images and select number of views based on TIME_STEP_COUNT
+                    X, y = utils.load_npy(X), utils.load_npy(y) 
+                    X = preprocessor.Preprocessor_npy(X).out_tensor
 
                     if params["MODE"] == "DEBUG":
                         epoch_train_loss.append(net.step(X, y, 'debug'))

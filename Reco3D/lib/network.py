@@ -43,6 +43,8 @@ class Network:
             self.X = tf.placeholder(tf.float32, [None, None, None, None, None])
         with tf.name_scope("Labels"):
             self.Y_onehot = tf.placeholder(tf.float32, [None, 32, 32, 32, 2])
+        with tf.name_scope("LearningRate"):
+            self.LR = tf.placeholder(tf.float32, [])
 
         print ("Initializing Network")
         #pp = preprocessor.Preprocessor(self.X) # here
@@ -168,11 +170,13 @@ class Network:
         print("optimizer")
         if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
             optimizer = tf.train.AdamOptimizer(
-                learning_rate=self.params["TRAIN"]["ADAM_LEARN_RATE"], epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
+                learning_rate=self.LR, epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
+                #learning_rate=self.params["TRAIN"]["ADAM_LEARN_RATE"], epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
             tf.summary.scalar("adam_learning_rate", optimizer._lr)
         else:
             optimizer = tf.train.GradientDescentOptimizer(
-                learning_rate=self.params["TRAIN"]["GD_LEARN_RATE"])
+                learning_rate=self.LR)
+                #learning_rate=self.params["TRAIN"]["GD_LEARN_RATE"])
             tf.summary.scalar("learning_rate", optimizer._learning_rate)
 
         grads_and_vars = optimizer.compute_gradients(self.loss)
@@ -225,8 +229,16 @@ class Network:
         cur_dir = self.get_cur_epoch_dir()
         #data_npy, label_npy = utils.load_npy(data), utils.load_npy(label) # here
         data_npy, label_npy = data, label
-        feed_dict = {self.X: data_npy, self.Y_onehot: label_npy} 
+        lr = 0
+        if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
+            lr = self.params["TRAIN"]["ADAM_LEARN_RATE"]
+        else:
+            lr = self.params["TRAIN"]["GD_LEARN_RATE"]
 
+        if self.epoch_index() < 2:
+            feed_dict = {self.X: data_npy, self.Y_onehot: label_npy, self.LR: lr} 
+        else:
+            feed_dict = {self.X: data_npy, self.Y_onehot: label_npy, self.LR: lr/2.0} 
         if step_type == "train":
             fetches = [self.apply_grad, self.loss, self.summary_op,
                        self.print, self.step_count, self.metrics_op]
