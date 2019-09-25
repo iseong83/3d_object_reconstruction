@@ -235,7 +235,7 @@ class Network:
         else:
             lr = self.params["TRAIN"]["GD_LEARN_RATE"]
 
-        if self.epoch_index() < 2:
+        if self.epoch_index() < 150:
             feed_dict = {self.X: data_npy, self.Y_onehot: label_npy, self.LR: lr} 
         else:
             feed_dict = {self.X: data_npy, self.Y_onehot: label_npy, self.LR: lr/2.0} 
