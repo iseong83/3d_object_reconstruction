@@ -1,10 +1,10 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 10,
+    "DATASET_SIZE": 4,
     "TRAIN": {
-        "BATCH_SIZE": 2,
-        "EPOCH_COUNT": 10,
-        "TIME_STEP_COUNT": "RANDOM",
+        "BATCH_SIZE": 3,
+        "EPOCH_COUNT": 2,
+        "TIME_STEP_COUNT": 5,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
         "ADAM_LEARN_RATE": 0.00001,
@@ -12,9 +12,9 @@
         "VALIDATION_INTERVAL": 25,
         "SHUFFLE_IMAGE_SEQUENCE": false,
         "INITIALIZER": "XAVIER",
-        "ENCODER_MODE": "RESIDUAL",
-        "DECODER_MODE": "RESIDUAL",
-        "RNN_MODE": "LSTM",
+        "ENCODER_MODE": "SERESNET",
+        "DECODER_MODE": "SERESNET",
+        "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4
     },

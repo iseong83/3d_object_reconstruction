@@ -17,6 +17,7 @@ from sklearn import model_selection
 from keras.utils import to_categorical
 from numpy.random import randint, permutation, shuffle
 from natsort import natsorted
+import boto3
 
 
 def load_obj_id(obj_id):
@@ -218,6 +219,22 @@ def download_dataset():
 
     if not os.path.isdir("data/ShapeNetRendering"):
         download_from_link(DATA_LINK)
+
+# download data from s3 bucket
+def download_from_s3_folder(s3_bucket='shapenetv1'):
+    #s3_bucket_name = 'shapenetv1'
+    #s3 = boto3.resource('s3')
+    #print ("Downloading the data {} from s3 to {}".format("shapenetv1.tar", "./data"))
+    #s3.meta.client.download_file(s3_bucket, 'data/shapenetv1.tar', './data/shapenetv1.tar') 
+    LINK = 'https://shapenetv1.s3-us-west-2.amazonaws.com/data/shapenetv1.tar'
+    os.system('wget -c {0} -P ./data'.format(LINK))
+
+def prepare_dataset():
+    archive = 'data/shapenetv1.tar'
+    if not os.path.isfile(archive) and not os.path.isdir("data/ShapeNetVox32"):
+        download_from_s3_folder()
+    if not os.path.isdir("data/ShapeNetVox32") or not os.path.isdir('data/ShapeNetRendering') :
+        os.system("tar -xvzf {0} -C ./data/".format(archive))
 
 
 def preprocess_dataset():
