@@ -9,16 +9,6 @@ def map_images(fcn, sequence, name):
         out = list()
         for i in range(sequence.get_shape()[1]):
             out.append(fcn(sequence[:,i,...]))
-        # tried to use while_loop instead of python for loop
-        # but, haven't figured out how I can make a stack tensor 
-        #t = tf.constant(0)
-        #def cond(t):
-        #    return tf.less(t, tf.shape(sequence)[1])
-        #def body(t):
-        #    out.append(fcn(sequence[:,t,...]))
-        #    t = tf.add(t, 1)
-        #    return [t]
-        #tf.while_loop(cond, body, [t])
         ret = tf.stack(out,axis=1)
     return ret
 
@@ -27,7 +17,8 @@ def fc_sequence(sequence, units):
     with tf.name_scope('fc_sequence'):
         def dense(x):
             return tf.layers.dense(inputs=x, use_bias=False, units=units)
-        ret = map_images(dense, sequence, name='fc_map')
+        ret = tf.map_fn(dense, sequence, name='fc_map')
+        #ret = map_images(dense, sequence, name='fc_map')
     return ret
 
 # global averaging pooling
@@ -35,7 +26,8 @@ def global_average_pooling(sequence):
     with tf.name_scope('global_average_pooling'):
         def global_avg_pool(x):
             return tf.reduce_mean(x, axis=[1,2]) # [1,2] = [H, W] of image
-        ret = map_images(global_avg_pool, sequence, name='global_avg_pool')
+        ret = tf.map_fn(global_avg_pool, sequence, name='global_avg_poo_map')
+        #ret = map_images(global_avg_pool, sequence, name='global_avg_pool')
     return ret
 
 # sigmoid function 
@@ -43,7 +35,8 @@ def sigmoid_sequence(sequence):
     with tf.name_scope('sigmoid_sequence'):
         def sigmoid(x):
             return tf.nn.sigmoid(x)
-        ret = map_images(sigmoid, sequence, name='sigmod_map')
+        ret = tf.map_fn(sigmoid, sequence, name='sigmoid_map')
+        #ret = map_images(sigmoid, sequence, name='sigmod_map')
     return ret
 
 # batch normalization
@@ -65,13 +58,7 @@ def batch_normalization(sequence, out_featuremap_count, training):
                                 lambda: (ema.average(batch_mean), ema.average(batch_var)))
             normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
             return normed
-        ret = map_images(batch_norm, sequence, name='batch_norm')
-        #reuse = None
-        #if not training : reuse = True
-        #def batch_norm(x):
-        #    return tf.contrib.layers.batch_norm(inputs=x, is_training=training, reuse=reuse,
-        #            updates_collections=None, decay=0.9, 
-        #            center=True, scale=True, zero_debias_moving_mean=True)
+        ret = tf.map_fn(batch_norm, sequence, name='batch_norm_map')
         #ret = map_images(batch_norm, sequence, name='batch_norm')
     return ret
 
@@ -89,9 +76,8 @@ def conv_sequence(sequence, in_featuremap_count, out_featuremap_count, initializ
 
         def conv2d(x): return tf.nn.bias_add(tf.nn.conv2d(
             x, kernel, S, padding=P, dilations=D, name="conv2d"), bias)
-        #ret = tf.map_fn(conv2d, sequence, name="conv2d_map")
-        #fixed wrong loop
-        ret = map_images(conv2d, sequence, name='conv2d_map')
+        ret = tf.map_fn(conv2d, sequence, name="conv2d_map")
+        #ret = map_images(conv2d, sequence, name='conv2d_map')
 
         tf.add_to_collection("feature_maps", ret)
 
@@ -125,17 +111,15 @@ def max_pool_sequence(sequence, K=[1, 2, 2, 1], S=[1, 2, 2, 1], P="SAME"):
     with tf.name_scope("max_pool_sequence"):
         def max_pool(a): 
             return tf.nn.max_pool(a, K, S, padding=P)
-        #ret = tf.map_fn(max_pool, sequence, name="max_pool_map")
-        #fixed wrong loop sequence
-        ret = map_images(max_pool, sequence, name='max_pool_map')
+        ret = tf.map_fn(max_pool, sequence, name="max_pool_map")
+        #ret = map_images(max_pool, sequence, name='max_pool_map')
     return ret
 
 
 def relu_sequence(sequence):
     with tf.name_scope("relu_sequence"):
-        #ret = tf.map_fn(tf.nn.relu, sequence, name="relu_map")
-        #fixed wrong loop sequence
-        ret = map_images(tf.nn.relu, sequence, name='relu_map')
+        ret = tf.map_fn(tf.nn.relu, sequence, name="relu_map")
+        #ret = map_images(tf.nn.relu, sequence, name='relu_map')
     return ret
 
 def fully_connected_sequence(sequence, in_units=1024, out_units=1024, initializer=None):
@@ -151,9 +135,8 @@ def fully_connected_sequence(sequence, in_units=1024, out_units=1024, initialize
         def forward_pass(a): return tf.nn.bias_add(
             tf.matmul(a, weights), bias)
 
-        #ret = tf.map_fn(forward_pass, sequence, name='fully_connected_map')
-        #fixed wrong loop sequence
-        ret = map_images(forward_pass, sequence, name='fully_connected_map')
+        ret = tf.map_fn(forward_pass, sequence, name='fully_connected_map')
+        #ret = map_images(forward_pass, sequence, name='fully_connected_map')
 
         params = utils.read_params()
         if params["VIS"]["HISTOGRAMS"]:
@@ -167,10 +150,9 @@ def fully_connected_sequence(sequence, in_units=1024, out_units=1024, initialize
 
 def flatten_sequence(sequence):
     with tf.name_scope("flatten_sequence"):
-        #ret = tf.map_fn(
-        #    tf.contrib.layers.flatten,  sequence, name="flatten_map")
-        #fixed wrong loop sequence
-        ret = map_images(tf.contrib.layers.flatten, sequence, name='flatten_map')
+        ret = tf.map_fn(
+            tf.contrib.layers.flatten,  sequence, name="flatten_map")
+        #ret = map_images(tf.contrib.layers.flatten, sequence, name='flatten_map')
     return ret
 
 # transition layer before applying squeeze and excitation layers
@@ -189,12 +171,11 @@ def block_seresnet_encoder(sequence, out_featuremap_count, ratio=4, initializer=
         squeeze = global_average_pooling(out)
 
         excitation = fully_connected_sequence(squeeze, in_units=out_featuremap_count, out_units=out_featuremap_count//ratio)
-        #excitation = fc_sequence(squeeze, units=out_featuremap_count//ratio)
         excitation = relu_sequence(excitation)
         excitation = fully_connected_sequence(excitation, in_units=out_featuremap_count//ratio, out_units=out_featuremap_count)
-        #excitation = fc_sequence(excitation, units=out_featuremap_count)
         excitation = sigmoid_sequence(excitation)
-        excitation = tf.reshape(excitation, [-1,out.get_shape()[1],1,1,out_featuremap_count])
+        #excitation = tf.reshape(excitation, [-1,out.get_shape()[1],1,1,out_featuremap_count])
+        excitation = tf.reshape(excitation, [tf.shape(out)[0],-1,1,1,out_featuremap_count])
         scale = out * excitation
         ret = relu_sequence(sequence+scale)
     return ret

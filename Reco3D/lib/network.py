@@ -51,6 +51,8 @@ class Network:
         #X_preprocessed = self.X
         n_batchsize = tf.shape(X_preprocessed)[0] 
 
+        # switch batch <-> nviews
+        X_preprocessed = tf.transpose(X_preprocessed, [1, 0, 2, 3, 4])
         # encoder
         print("encoder")
         if self.params["TRAIN"]["ENCODER_MODE"] == "DILATED":
@@ -62,6 +64,8 @@ class Network:
         else:
             en = encoder.Simple_Encoder(X_preprocessed)
         encoded_input = en.out_tensor
+        # switch batch <-> nviews
+        encoded_input = tf.transpose(encoded_input, [1, 0, 2])
 
         # visualize transformation of input state to voxel
         if self.params["VIS"]["ENCODER_PROCESS"]:
