@@ -17,7 +17,6 @@ from tensorflow.python import debug as tf_debug
 
 
 # Recurrent Reconstruction Neural Network (R2N2)
-
 class Network:
     def __init__(self, params=None):
         # read params
@@ -46,9 +45,9 @@ class Network:
             self.Y_onehot = tf.placeholder(tf.float32, [None, 32, 32, 32, 2])
 
         print ("Initializing Network")
-        pp = preprocessor.Preprocessor(self.X) # here
-        X_preprocessed = pp.out_tensor # here
-        #X_preprocessed = self.X
+        #pp = preprocessor.Preprocessor(self.X) # here
+        #X_preprocessed = pp.out_tensor # here
+        X_preprocessed = self.X # (n_batch, n_views, 127, 127, 3)
         n_batchsize = tf.shape(X_preprocessed)[0] 
 
         # switch batch <-> nviews
@@ -74,7 +73,8 @@ class Network:
                 fm_list = []
                 for fm in feature_maps:
                     fm_slice = fm[0, 0, :, :, 0]
-                    fm_shape = fm_slice.get_shape().as_list()
+                    #fm_shape = fm_slice.get_shape().as_list()
+                    fm_shape = tf.shape(fm_slice)
                     fm_slice = tf.pad(fm_slice, [[0, 0], [127-fm_shape[0], 0]])
                     fm_list.append(fm_slice)
                 fm_img = tf.concat(fm_list, axis=0)
@@ -97,7 +97,8 @@ class Network:
                 hidden_state = tf.zeros(
                     [n_batchsize, n_cell, n_cell, n_cell, n_hidden], name="zero_hidden_state")
 
-            n_timesteps = self.params["TRAIN"]["TIME_STEP_COUNT"]
+            #n_timesteps = self.params["TRAIN"]["TIME_STEP_COUNT"]
+            n_timesteps = np.shape(X_preprocessed)[1]
             # feed a limited seqeuence of images
             if isinstance(n_timesteps, int) and n_timesteps > 0:
                 for t in range(n_timesteps):
@@ -222,8 +223,8 @@ class Network:
     def step(self, data, label, step_type):
         utils.make_dir(self.MODEL_DIR)
         cur_dir = self.get_cur_epoch_dir()
-        data_npy, label_npy = utils.load_npy(data), utils.load_npy(label) # here
-        #data_npy, label_npy = data, label
+        #data_npy, label_npy = utils.load_npy(data), utils.load_npy(label) # here
+        data_npy, label_npy = data, label
         feed_dict = {self.X: data_npy, self.Y_onehot: label_npy} 
 
         if step_type == "train":

@@ -9,6 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import Reco3D.lib.dataset as dataset
 import Reco3D.lib.network as network
+from Reco3D.lib import preprocessor
 import Reco3D.lib.vis as vis
 from Reco3D.lib import metrics
 import argparse
@@ -49,13 +50,15 @@ def main():
         X = load_images(image_dir)
     else:
         X, Y = dataset.load_random_sample()
-    print (X.shape)
     # show example image
     vis.multichannel(X[0])
+    X = preprocessor.Preprocessor_npy(np.expand_dims(X,axis=0)).out_tensor
+    print (X.shape)
 
     # make inference
     t1 = time.time()
-    out = net.predict(X[:,:,:,0:3])
+    #out = net.predict(X[:,:,:,0:3])
+    out = net.predict(X[:,0,:,:,0:3])
     t2 = time.time()
     
     print ("Inference time {} sec".format(t2-t1))

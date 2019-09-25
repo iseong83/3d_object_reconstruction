@@ -82,14 +82,14 @@ if __name__ == '__main__':
                     counter = 0
                     X = X_val_batchs.popleft()
                     y = y_val_batchs.popleft()
-                    #X, y = utils.load(X), utils.load_npy(y) # here
-                    #X = preprocessor.Preprocessor(X).out_tensor #here
+                    X, y = utils.load_npy(X), utils.load_npy(y) # here
+                    X = preprocessor.Preprocessor_npy(X).out_tensor #here
                     epoch_val_loss.append(net.step(X, y, 'val'))
                 else:
                     X = X_train_batchs.popleft()
                     y = y_train_batchs.popleft()
-                    #X, y = utils.load(X), utils.load_npy(y) # here
-                    #X = preprocessor.Preprocessor(X).out_tensor # here
+                    X, y = utils.load_npy(X), utils.load_npy(y) # here
+                    X = preprocessor.Preprocessor_npy(X).out_tensor # here
 
                     if params["MODE"] == "DEBUG":
                         epoch_train_loss.append(net.step(X, y, 'debug'))
