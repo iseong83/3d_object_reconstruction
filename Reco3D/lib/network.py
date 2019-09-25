@@ -67,6 +67,7 @@ class Network:
         encoded_input = en.out_tensor
         # switch batch <-> nviews
         encoded_input = tf.transpose(encoded_input, [1, 0, 2])
+        X_preprocessed = tf.transpose(X_preprocessed, [1, 0, 2, 3, 4])
 
         # visualize transformation of input state to voxel
         if self.params["VIS"]["ENCODER_PROCESS"]:

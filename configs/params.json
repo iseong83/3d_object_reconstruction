@@ -3,7 +3,7 @@
     "DATASET_SIZE": 4,
     "TRAIN": {
         "BATCH_SIZE": 3,
-        "EPOCH_COUNT": 3,
+        "EPOCH_COUNT": 2,
         "TIME_STEP_COUNT": 5,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
@@ -14,7 +14,7 @@
         "INITIALIZER": "XAVIER",
         "ENCODER_MODE": "SERESNET",
         "DECODER_MODE": "SERESNET",
-        "RNN_MODE": "LSTM",
+        "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4
     },
