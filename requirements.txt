@@ -1,4 +1,7 @@
 # To install these Python dependencies, please type:
 # pip install -r requirements.txt
-
-streamlit
+trimesh
+scikit-image==0.14.2
+natsort
+keyboard
+moviepy==0.2.3.5

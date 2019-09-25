@@ -10,12 +10,13 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from datetime import datetime
-from Reco3D.lib import dataset, preprocessor, encoder, recurrent_module, decoder, loss, vis, utils
+from Reco3D.lib import preprocessor
+from Reco3D.lib import dataset, encoder, recurrent_module, decoder, loss, vis, utils
+from Reco3D.lib import metrics
 from tensorflow.python import debug as tf_debug
 
 
 # Recurrent Reconstruction Neural Network (R2N2)
-
 class Network:
     def __init__(self, params=None):
         # read params
@@ -42,20 +43,31 @@ class Network:
             self.X = tf.placeholder(tf.float32, [None, None, None, None, None])
         with tf.name_scope("Labels"):
             self.Y_onehot = tf.placeholder(tf.float32, [None, 32, 32, 32, 2])
+        with tf.name_scope("LearningRate"):
+            self.LR = tf.placeholder(tf.float32, [])
 
-        pp = preprocessor.Preprocessor(self.X)
-        X_preprocessed = pp.out_tensor
-        n_batchsize = tf.shape(X_preprocessed)[0]
+        print ("Initializing Network")
+        #pp = preprocessor.Preprocessor(self.X) # here
+        #X_preprocessed = pp.out_tensor # here
+        X_preprocessed = self.X # (n_batch, n_views, 127, 127, 3)
+        n_batchsize = tf.shape(X_preprocessed)[0] 
 
+        # switch batch <-> nviews
+        X_preprocessed = tf.transpose(X_preprocessed, [1, 0, 2, 3, 4])
         # encoder
         print("encoder")
         if self.params["TRAIN"]["ENCODER_MODE"] == "DILATED":
             en = encoder.Dilated_Encoder(X_preprocessed)
         elif self.params["TRAIN"]["ENCODER_MODE"] == "RESIDUAL":
             en = encoder.Residual_Encoder(X_preprocessed)
+        elif self.params["TRAIN"]["ENCODER_MODE"] == "SERESNET":
+            en = encoder.SENet_Encoder(X_preprocessed)
         else:
             en = encoder.Simple_Encoder(X_preprocessed)
         encoded_input = en.out_tensor
+        # switch batch <-> nviews
+        encoded_input = tf.transpose(encoded_input, [1, 0, 2])
+        X_preprocessed = tf.transpose(X_preprocessed, [1, 0, 2, 3, 4])
 
         # visualize transformation of input state to voxel
         if self.params["VIS"]["ENCODER_PROCESS"]:
@@ -64,7 +76,8 @@ class Network:
                 fm_list = []
                 for fm in feature_maps:
                     fm_slice = fm[0, 0, :, :, 0]
-                    fm_shape = fm_slice.get_shape().as_list()
+                    #fm_shape = fm_slice.get_shape().as_list()
+                    fm_shape = tf.shape(fm_slice)
                     fm_slice = tf.pad(fm_slice, [[0, 0], [127-fm_shape[0], 0]])
                     fm_list.append(fm_slice)
                 fm_img = tf.concat(fm_list, axis=0)
@@ -87,7 +100,8 @@ class Network:
                 hidden_state = tf.zeros(
                     [n_batchsize, n_cell, n_cell, n_cell, n_hidden], name="zero_hidden_state")
 
-            n_timesteps = self.params["TRAIN"]["TIME_STEP_COUNT"]
+            #n_timesteps = self.params["TRAIN"]["TIME_STEP_COUNT"]
+            n_timesteps = np.shape(X_preprocessed)[1]
             # feed a limited seqeuence of images
             if isinstance(n_timesteps, int) and n_timesteps > 0:
                 for t in range(n_timesteps):
@@ -118,6 +132,8 @@ class Network:
             de = decoder.Dilated_Decoder(hidden_state)
         elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL":
             de = decoder.Residual_Decoder(hidden_state)
+        elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET":
+            de = decoder.SENet_Decoder(hidden_state)
         else:
             de = decoder.Simple_Decoder(hidden_state)
         self.logits = de.out_tensor
@@ -155,11 +171,13 @@ class Network:
         print("optimizer")
         if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
             optimizer = tf.train.AdamOptimizer(
-                learning_rate=self.params["TRAIN"]["ADAM_LEARN_RATE"], epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
+                learning_rate=self.LR, epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
+                #learning_rate=self.params["TRAIN"]["ADAM_LEARN_RATE"], epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
             tf.summary.scalar("adam_learning_rate", optimizer._lr)
         else:
             optimizer = tf.train.GradientDescentOptimizer(
-                learning_rate=self.params["TRAIN"]["GD_LEARN_RATE"])
+                learning_rate=self.LR)
+                #learning_rate=self.params["TRAIN"]["GD_LEARN_RATE"])
             tf.summary.scalar("learning_rate", optimizer._learning_rate)
 
         grads_and_vars = optimizer.compute_gradients(self.loss)
@@ -210,9 +228,18 @@ class Network:
     def step(self, data, label, step_type):
         utils.make_dir(self.MODEL_DIR)
         cur_dir = self.get_cur_epoch_dir()
-        data_npy, label_npy = utils.load_npy(data), utils.load_npy(label)
-        feed_dict = {self.X: data_npy, self.Y_onehot: label_npy}
+        #data_npy, label_npy = utils.load_npy(data), utils.load_npy(label) # here
+        data_npy, label_npy = data, label
+        lr = 0
+        if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
+            lr = self.params["TRAIN"]["ADAM_LEARN_RATE"]
+        else:
+            lr = self.params["TRAIN"]["GD_LEARN_RATE"]
 
+        if self.epoch_index() < 150:
+            feed_dict = {self.X: data_npy, self.Y_onehot: label_npy, self.LR: lr} 
+        else:
+            feed_dict = {self.X: data_npy, self.Y_onehot: label_npy, self.LR: lr/2.0} 
         if step_type == "train":
             fetches = [self.apply_grad, self.loss, self.summary_op,
                        self.print, self.step_count, self.metrics_op]
@@ -317,7 +344,7 @@ class Network_restored:
                     n = len(op.inputs[0].shape)
                 if name in op.name and n == ndim:
                     ret = op.name+":0"
-                    print(ret)
+                    #print(ret)
                     return ret
             except:
                 pass

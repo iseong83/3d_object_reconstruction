@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import Reco3D.lib.dataset as dataset
 import Reco3D.lib.network as network
 import Reco3D.lib.utils as utils
+from Reco3D.lib import preprocessor
 from datetime import datetime
 
 
@@ -49,8 +50,7 @@ if __name__ == '__main__':
     train_params = params["TRAIN"]
 
     # split dataset
-    X_train, y_train, X_val, y_val, X_test, y_test = dataset.train_val_test_split(
-        data, label)
+    X_train, y_train, X_val, y_val, X_test, y_test = dataset.train_val_test_split(data, label)
     save_dataset_split()
 
     print("training loop")
@@ -82,10 +82,18 @@ if __name__ == '__main__':
                     counter = 0
                     X = X_val_batchs.popleft()
                     y = y_val_batchs.popleft()
+                    # load data and preprocess
+                    X, y = utils.load_npy(X), utils.load_npy(y)
+                    X = preprocessor.Preprocessor_npy(X).out_tensor 
                     epoch_val_loss.append(net.step(X, y, 'val'))
                 else:
                     X = X_train_batchs.popleft()
                     y = y_train_batchs.popleft()
+                    # load data and preprocess
+                    # crop images and select number of views based on TIME_STEP_COUNT
+                    X, y = utils.load_npy(X), utils.load_npy(y) 
+                    X = preprocessor.Preprocessor_npy(X).out_tensor
+
                     if params["MODE"] == "DEBUG":
                         epoch_train_loss.append(net.step(X, y, 'debug'))
                     else:
