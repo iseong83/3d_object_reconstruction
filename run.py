@@ -83,21 +83,22 @@ if __name__ == '__main__':
                     X = X_val_batchs.popleft()
                     y = y_val_batchs.popleft()
                     # load data and preprocess
-                    X, y = utils.load_npy(X), utils.load_npy(y)
-                    X = preprocessor.Preprocessor_npy(X).out_tensor 
-                    epoch_val_loss.append(net.step(X, y, 'val'))
+                    X_npy = utils.load_npy(X)
+                    print ('=>', X_npy.shape)
+                    X_npy = preprocessor.Preprocessor_npy(X_npy).out_tensor 
+                    print (X_npy.shape)
+                    epoch_val_loss.append(net.step(X, y, X_npy, 'val'))
                 else:
                     X = X_train_batchs.popleft()
                     y = y_train_batchs.popleft()
                     # load data and preprocess
                     # crop images and select number of views based on TIME_STEP_COUNT
-                    X, y = utils.load_npy(X), utils.load_npy(y) 
-                    X = preprocessor.Preprocessor_npy(X).out_tensor
-
+                    X_npy = utils.load_npy(X)
+                    X_npy = preprocessor.Preprocessor_npy(X_npy).out_tensor 
                     if params["MODE"] == "DEBUG":
-                        epoch_train_loss.append(net.step(X, y, 'debug'))
+                        epoch_train_loss.append(net.step(X, y, X_npy, 'debug'))
                     else:
-                        epoch_train_loss.append(net.step(X, y, 'train'))
+                        epoch_train_loss.append(net.step(X, y, X_npy, 'train'))
             train_loss.append(epoch_train_loss)
             val_loss.append(epoch_val_loss)
 

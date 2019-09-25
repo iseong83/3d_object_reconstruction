@@ -110,6 +110,7 @@ def montage(packed_ims, axis):
     n_tile = math.ceil(math.sqrt(N))
     rows = []
     for i in range(n_tile):
+        if i*n_tile > N: continue
         im = packed_ims[i * n_tile]
         for j in range(1, n_tile):
             ind = i * n_tile + j

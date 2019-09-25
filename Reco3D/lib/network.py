@@ -225,11 +225,11 @@ class Network:
         tf.local_variables_initializer().run()
         print("...done!")
 
-    def step(self, data, label, step_type):
+    def step(self, data, label, data_npy, step_type):
         utils.make_dir(self.MODEL_DIR)
         cur_dir = self.get_cur_epoch_dir()
         #data_npy, label_npy = utils.load_npy(data), utils.load_npy(label) # here
-        data_npy, label_npy = data, label
+        label_npy = utils.load_npy(label)
         lr = 0
         if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
             lr = self.params["TRAIN"]["ADAM_LEARN_RATE"]

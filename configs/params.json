@@ -1,8 +1,8 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 4,
+    "DATASET_SIZE": 15,
     "TRAIN": {
-        "BATCH_SIZE": 3,
+        "BATCH_SIZE": 2,
         "EPOCH_COUNT": 2,
         "TIME_STEP_COUNT": 5,
         "OPTIMIZER": "ADAM",
@@ -26,7 +26,7 @@
         "MODELS_REMOTE": "models_remote"
     },
     "VIS": {
-        "VALIDATION_STEP": true,
+        "VALIDATION_STEP": false,
         "HISTOGRAMS": false,
         "FEATURE_MAPS": false,
         "FEATURE_VOXELS": false,
