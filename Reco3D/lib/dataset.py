@@ -17,6 +17,7 @@ from sklearn import model_selection
 from keras.utils import to_categorical
 from numpy.random import randint, permutation, shuffle
 from natsort import natsorted
+from skimage.transform import resize
 import boto3
 
 
@@ -39,7 +40,11 @@ def load_img(img_path):
 
 def load_vox(vox_path):
     with open(vox_path, 'rb') as f:
-        return to_categorical(binvox_rw.read_as_3d_array(f).data)
+        voxel = binvox_rw.read_as_3d_array(f).data
+        if False:
+        #if np.shape(voxel) != (32, 32, 32):
+            voxel = resize(voxel, (32, 32, 32), anti_aliasing=True,anti_aliasing_sigma=0.01)>0
+        return to_categorical(voxel)
 
 
 def load_imgs(img_path_list):

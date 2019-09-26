@@ -9,11 +9,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 import Reco3D.lib.dataset as dataset
 import Reco3D.lib.network as network
+from Reco3D.lib import preprocessor
 import Reco3D.lib.vis as vis
 from Reco3D.lib.segmentation import *
 from PIL import Image
 import argparse
 import time
+import math
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -28,7 +30,6 @@ def get_args():
 
 def load_images(img_path, model, n_views=5):
     # load example images
-    size = 245, 245
     print ('Loading Images at {}'.format(img_path))
     original_img = list()
     segmented_img = list()
@@ -37,12 +38,15 @@ def load_images(img_path, model, n_views=5):
             if i >= n_views: break
             img = load_image(os.path.join(root,file))
             resized_im, seg_map = model.run(img)
+            print ('->', np.shape(resized_im))
             mask = np.repeat(seg_map[:,:,np.newaxis],3,axis=2)
             object = np.where(mask>0, np.array(resized_im), 0)
             # resize them
-            #object = Image.fromarray(object)
-            #resized_im.thumbnail(size, Image.ANTIALIAS)
-            #object.thumbnail(size, Image.ANTIALIAS)
+            min_size, max_size = min(np.shape(resized_im)[:2]), max(np.shape(resized_im)[:2])
+            size = math.ceil(max_size*137/min_size)
+            object = Image.fromarray(object)
+            resized_im.thumbnail((size,size), Image.ANTIALIAS)
+            object.thumbnail((size,size), Image.ANTIALIAS)
 
             original_img.append(resized_im)
             segmented_img.append(object)
@@ -64,12 +68,13 @@ def main():
     print (org_img.shape, seg_img.shape)
 
     # show example image
-    vis.multichannel(org_img[0])
-    #vis.img_sequence(org_img)
+    #vis.multichannel(org_img[0])
+    vis.img_sequence(org_img)
+    seg_img = preprocessor.Preprocessor_npy(np.expand_dims(seg_img,axis=0)).out_tensor
 
     # make inference
     t1 = time.time()
-    out = net.predict(seg_img[:,:,:,0:3])
+    out = net.predict(seg_img[:,:,:,:,0:3])
     t2 = time.time()
     
     print ("Inference time {} sec".format(t2-t1))

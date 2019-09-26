@@ -84,9 +84,7 @@ if __name__ == '__main__':
                     y = y_val_batchs.popleft()
                     # load data and preprocess
                     X_npy = utils.load_npy(X)
-                    print ('=>', X_npy.shape)
                     X_npy = preprocessor.Preprocessor_npy(X_npy).out_tensor 
-                    print (X_npy.shape)
                     epoch_val_loss.append(net.step(X, y, X_npy, 'val'))
                 else:
                     X = X_train_batchs.popleft()

@@ -41,13 +41,14 @@ def main():
     model_dir = args.path.strip('/')
     image_dir = args.data
     random_data = args.rnd
+    nviews = 5
 
     print ('Loading the model {}'.format(model_dir))
     net=network.Network_restored(model_dir)
     print ('Loaded the model')
 
     if not random_data:
-        X = load_images(image_dir)
+        X = load_images(image_dir, n_views=nviews)
     else:
         X, Y = dataset.load_random_sample()
     # show example image
@@ -58,7 +59,7 @@ def main():
     # make inference
     t1 = time.time()
     #out = net.predict(X[:,:,:,0:3])
-    out = net.predict(X[:,0,:,:,0:3])
+    out = net.predict(X[:,:nviews,:,:,0:3])
     t2 = time.time()
     
     print ("Inference time {} sec".format(t2-t1))
