@@ -3,7 +3,7 @@
     "DATASET_SIZE": 15,
     "TRAIN": {
         "BATCH_SIZE": 2,
-        "EPOCH_COUNT": 2,
+        "EPOCH_COUNT": 1,
         "TIME_STEP_COUNT": 5,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
@@ -16,7 +16,8 @@
         "DECODER_MODE": "SERESNET",
         "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
-        "RNN_CELL_NUM": 4
+        "RNN_CELL_NUM": 4,
+	"LOSS_FCN": "VOXEL_SOFTMAX"
     },
     "DIRS": {
         "DATA": "data",

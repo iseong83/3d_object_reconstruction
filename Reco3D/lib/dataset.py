@@ -41,8 +41,8 @@ def load_img(img_path):
 def load_vox(vox_path):
     with open(vox_path, 'rb') as f:
         voxel = binvox_rw.read_as_3d_array(f).data
-        if False:
-        #if np.shape(voxel) != (32, 32, 32):
+        #if False:
+        if np.shape(voxel) != (32, 32, 32):
             voxel = resize(voxel, (32, 32, 32), anti_aliasing=True,anti_aliasing_sigma=0.01)>0
         return to_categorical(voxel)
 

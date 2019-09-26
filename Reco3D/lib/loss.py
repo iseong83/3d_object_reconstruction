@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 
 
@@ -16,3 +15,30 @@ class Voxel_Softmax:
                                                        log_softmax), axis=-1)
             losses = tf.reduce_mean(cross_entropy, axis=[1, 2, 3])
             self.loss = tf.reduce_mean(losses)
+
+
+class Focal_Loss:
+    """
+        Multi-labels Focal loss formula:
+            FL = -alpha * (z-p)^gamma * log(p) -(1-alpha) * p^gamma * log(1-p)
+                 ,which alpha = 0.25, gamma = 2, p = sigmoid(x), z = target_tensor.
+    """
+    def __init__(self, Y, logits, alpha=0.25, gamma=2.0):
+        with tf.name_scope("Focal_Loss"):
+            label = Y
+            epsilon = 1e-10
+            self.pred = tf.nn.sigmoid(label)
+            # cross-entropy
+            cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=label, logits=logits)
+            #self.pred = tf.clip_by_value(
+            #    tf.nn.softmax(logits), epsilon, 1-epsilon)
+            #log_pred = tf.log(self.pred)
+            # label = tf.one_hot(Y, 2) # one hot encoding is done in preprocessing
+            #cross_entropy = tf.reduce_sum(-tf.multiply(label,log_pred), axis=-1)
+            losses = tf.reduce_mean(cross_entropy, axis=[1, 2, 3])
+            alpha_ = label * alpha * (1.-label) * (1.-alpha)
+            p_t = tf.where(label == 1, self.pred, 1.-self.pred)
+            losses = tf.multiply(tf.pow(alpha * (1.-p_t), gamma), cross_entropy)
+            self.loss = tf.reduce_mean(losses)
+
+
