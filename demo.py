@@ -29,7 +29,7 @@ def get_args():
     return args
 
 def load_images(img_path, model, n_views=5):
-    # load example images
+    # load example images and apply segmentation
     print ('Loading Images at {}'.format(img_path))
     original_img = list()
     segmented_img = list()
@@ -37,6 +37,7 @@ def load_images(img_path, model, n_views=5):
         for i, file in enumerate(files):
             if i >= n_views: break
             img = load_image(os.path.join(root,file))
+            # DeepLab for image segmentation
             resized_im, seg_map = model.run(img)
             print ('->', np.shape(resized_im))
             mask = np.repeat(seg_map[:,:,np.newaxis],3,axis=2)

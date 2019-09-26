@@ -94,7 +94,8 @@ def vis_segmentation(image, seg_map):
 
   image = np.array(image)
   mask = np.repeat(seg_map[:,:,np.newaxis],3,axis=2)
-  object = np.where(mask>0, image, 255)
+  #object = np.where(mask>0, image, 255)
+  object = np.where(mask==9, image, 255)
 
   plt.subplot(grid_spec[0])
   plt.imshow(image)
