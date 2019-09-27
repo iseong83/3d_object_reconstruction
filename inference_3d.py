@@ -12,8 +12,10 @@ import Reco3D.lib.network as network
 from Reco3D.lib import preprocessor
 import Reco3D.lib.vis as vis
 from Reco3D.lib import metrics
+from PIL import Image
 import argparse
 import time
+import math
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -31,9 +33,20 @@ def get_args():
 def load_images(img_path, n_views=5):
     # load example images
     print ('Loading Images at {}'.format(img_path))
-    filenames = list(set(os.path.join(img_path,n) for n in os.listdir(img_path) if n.endswith(".png")))
-    # let's shuffle the images
+    filenames = list(set(os.path.join(img_path,n) for n in os.listdir(img_path) if n.endswith(".png") or n.endswith('.jpg')))
     img_data = dataset.load_imgs(filenames)
+
+    # resize if the input images larger than 137
+    min_size, max_size = min(np.shape(img_data[0])[:2]), max(np.shape(img_data[0])[:2])
+    if min_size > 137:
+        ret = []
+        for i in range(np.shape(img_data)[0]):
+            img = Image.fromarray(img_data[i])
+            size = math.ceil(max_size*137/min_size)
+            img.thumbnail((size,size), Image.ANTIALIAS)
+            ret.append(img)
+        img_data = np.stack(ret)
+
     print ("Loaded example")
     return img_data
 
@@ -44,7 +57,7 @@ def main():
     random_data = args.rnd
     test = args.test
 
-    nviews = 1
+    nviews = 5
 
     print ('Loading the model {}'.format(model_dir))
     net=network.Network_restored(model_dir)
