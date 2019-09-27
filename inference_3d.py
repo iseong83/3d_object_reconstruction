@@ -52,7 +52,7 @@ def main():
 
     if random_data:
         X, Y = dataset.load_random_sample()
-    if test:
+    elif test:
         X, Y = dataset.load_random_data_Pix3D()
     else:
         X = load_images(image_dir, n_views=nviews)
