@@ -1,9 +1,9 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 1000,
+    "DATASET_SIZE": 10,
     "TRAIN": {
-        "BATCH_SIZE": 8,
-        "EPOCH_COUNT": 160,
+        "BATCH_SIZE": 2,
+        "EPOCH_COUNT": 1,
         "TIME_STEP_COUNT": 5,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
@@ -24,7 +24,8 @@
         "DATA_PREPROCESSED": "data_preprocessed",
         "OUTPUT": "output",
         "MODELS_LOCAL": "models_local",
-        "MODELS_REMOTE": "models_remote"
+        "MODELS_REMOTE": "models_remote",
+	"DATA_PIX3D": "../data_pix3d/preprocessed_data"
     },
     "VIS": {
         "VALIDATION_STEP": false,

@@ -87,6 +87,22 @@ def load_label(label_samples):
         label_samples = [label_samples]
     return np.squeeze(load_voxs(label_samples))
 
+def load_data_Pix3D():
+    ''' Read Pix3D data. This dataset includes real imageas and binvox'''
+    data_path = utils.read_params()['DIRS']['DATA_PIX3D']
+    data_all = sorted(construct_file_path_list_from_dir(data_path, ['_x.npy']))
+    label_all = sorted(construct_file_path_list_from_dir(data_path, ['_y.npy']))
+
+    return np.array(data_all), np.array(label_all)
+
+def load_random_data_Pix3D():
+    data, label = load_data_Pix3D()
+    while True:
+        i = np.random.randint(0, len(data))
+        data_np, label_np = np.load(data[i]), np.load(label[i])
+        if data_np.shape[-1] == 3:
+            return data_np, label_np
+
 
 # load preprocessed data and labels
 def load_preprocessed_dataset():

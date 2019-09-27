@@ -47,6 +47,8 @@ class Preprocessor_npy():
 
         n_batchsize = np.shape(X)[0]
         X_dropped_alpha = X[:, :, :, :, 0:3]  # drop alpha channel
+        if np.shape(X)[1] < n_timesteps:
+            n_timesteps = np.shape(X)[1]
         X_cropped = self._crop_image(X_dropped_alpha, [n_batchsize, n_timesteps, 127, 127, 3])
         self.out_tensor = X_cropped
     def _crop_image(self, X, sizes):

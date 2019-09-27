@@ -22,6 +22,7 @@ def get_args():
     parser.add_argument("--data", help="Example data path", 
             type=str, default='./examples/chair_a')
     parser.add_argument("--rnd", help="If want to make with random dataset", action='store_true', default=False)
+    parser.add_argument("--test", help="Testing with Pix3D", action='store_true', default=False)
 
  
     args = parser.parse_args()
@@ -41,29 +42,38 @@ def main():
     model_dir = args.path.strip('/')
     image_dir = args.data
     random_data = args.rnd
-    nviews = 5
+    test = args.test
+
+    nviews = 1
 
     print ('Loading the model {}'.format(model_dir))
     net=network.Network_restored(model_dir)
     print ('Loaded the model')
 
-    if not random_data:
-        X = load_images(image_dir, n_views=nviews)
-    else:
+    if random_data:
         X, Y = dataset.load_random_sample()
+    if test:
+        X, Y = dataset.load_random_data_Pix3D()
+    else:
+        X = load_images(image_dir, n_views=nviews)
     # show example image
-    vis.multichannel(X[0])
+    print ('---->',X.shape)
+    if len(np.shape(X)) < 4:
+        vis.multichannel(X)
+    else:
+        vis.multichannel(X[0])
     X = preprocessor.Preprocessor_npy(np.expand_dims(X,axis=0)).out_tensor
     print (X.shape)
 
     # make inference
     t1 = time.time()
-    #out = net.predict(X[:,:,:,0:3])
     out = net.predict(X[:,:nviews,:,:,0:3])
     t2 = time.time()
     
     print ("Inference time {} sec".format(t2-t1))
     # show inference
+    if test or random_data:
+        vis.voxel_binary(Y)
     vis.voxel_binary(out[0])
     plt.show()
 
