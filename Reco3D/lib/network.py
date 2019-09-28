@@ -7,7 +7,10 @@ import random
 import keyboard
 import numpy as np
 
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 import matplotlib.pyplot as plt
 from datetime import datetime
 from Reco3D.lib import preprocessor
@@ -352,6 +355,183 @@ class Network_restored:
                     return ret
             except:
                 pass
+
+    def retrain(self, params=None):
+        # read params
+        if params is None:
+            self.params = utils.read_params()
+        else:
+            self.params = params
+
+        self.CREATE_TIME = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        self.MODEL_DIR = "{}/model_{}".format(
+            self.params["DIRS"]["MODELS_LOCAL"], self.CREATE_TIME)
+        utils.make_dir(self.MODEL_DIR)
+
+        with open(self.MODEL_DIR + '/params.json', 'w') as f:
+            json.dump(self.params, f)
+        graph = self.sess.graph
+        with graph.as_default():
+            self.X = graph.get_tensor_by_name('Data/Placeholder:0')
+            self.Y_onehot = graph.get_tensor_by_name('Labels/Placeholder:0')
+            self.LR = graph.get_tensor_by_name('LearningRate/Placeholder:0')
+
+            # TODO: make to read network name instead of hard coding
+            self.logits = graph.get_tensor_by_name('SENet_Decoder/conv_vox/BiasAdd:0')
+
+            print("loss")
+            if self.params["TRAIN"]["LOSS_FCN"] == "FOCAL_LOSS":
+                voxel_loss = loss.Focal_Loss(self.Y_onehot, self.logits)
+                self.softmax = voxel_loss.pred
+            else:
+                voxel_loss = loss.Voxel_Softmax(self.Y_onehot, self.logits)
+                self.softmax = voxel_loss.softmax
+            self.loss = voxel_loss.loss
+            tf.summary.scalar("loss", self.loss)
+
+            # misc
+            print("misc")
+            with tf.name_scope("misc"):
+                self.step_count = tf.Variable(
+                    0, trainable=False, name="step_count")
+                self.print = tf.Print(
+                    self.loss, [self.step_count, self.loss, self.step_count])
+
+            # optimizer
+            print("optimizer")
+            if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
+                optimizer = tf.train.AdamOptimizer(
+                    learning_rate=self.LR, epsilon=self.params["TRAIN"]["ADAM_EPSILON"], name='NewAdam')
+                    #learning_rate=self.params["TRAIN"]["ADAM_LEARN_RATE"], epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
+                tf.summary.scalar("adam_learning_rate", optimizer._lr)
+            else:
+                optimizer = tf.train.GradientDescentOptimizer(
+                    learning_rate=self.LR)
+                    #learning_rate=self.params["TRAIN"]["GD_LEARN_RATE"])
+                tf.summary.scalar("learning_rate", optimizer._learning_rate)
+
+            grads_and_vars = optimizer.compute_gradients(self.loss)
+            self.apply_grad = optimizer.apply_gradients(
+                grads_and_vars, global_step=self.step_count)
+
+            # the optimzer has not been optimized, initialize only new optimizer
+            uninitialized_vars = []
+            for var in tf.all_variables():
+                try:
+                    self.sess.run(var)
+                except tf.errors.FailedPreconditionError:
+                    uninitialized_vars.append(var)
+            
+            tf.initialize_variables(uninitialized_vars)
+
+            # metric
+            print("metrics")
+            with tf.name_scope("metrics"):
+                Y = tf.argmax(self.Y_onehot, -1)
+                predictions = tf.argmax(self.softmax, -1)
+                acc, acc_op = tf.metrics.accuracy(Y, predictions)
+                rms, rms_op = tf.metrics.root_mean_squared_error(
+                    self.Y_onehot, self.softmax)
+                iou, iou_op = tf.metrics.mean_iou(Y, predictions, 2)
+                self.metrics_op = tf.group(acc_op, rms_op, iou_op)
+
+            tf.summary.scalar("accuracy", acc)
+            tf.summary.scalar("rmse", rms)
+            tf.summary.scalar("iou", iou)
+
+            # initalize
+            # config=tf.ConfigProto(log_device_placement=True)
+            print("setup")
+            self.summary_op = tf.summary.merge_all()
+            self.sess = tf.InteractiveSession()
+
+            # summaries
+            print("summaries")
+            if self.params["MODE"] == "TEST":
+                self.test_writer = tf.summary.FileWriter(
+                    "{}/test".format(self.MODEL_DIR), self.sess.graph)
+            else:
+                self.train_writer = tf.summary.FileWriter(
+                    "{}/train".format(self.MODEL_DIR), self.sess.graph)
+                self.val_writer = tf.summary.FileWriter(
+                    "{}/val".format(self.MODEL_DIR), self.sess.graph)
+
+    def step(self, data, label, data_npy, step_type):
+        utils.make_dir(self.MODEL_DIR)
+        cur_dir = self.get_cur_epoch_dir()
+        label_npy = utils.load_npy(label)
+        lr = 0
+        if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
+            lr = self.params["TRAIN"]["ADAM_LEARN_RATE"]
+        else:
+            lr = self.params["TRAIN"]["GD_LEARN_RATE"]
+
+        feed_dict = {self.X: data_npy, self.Y_onehot: label_npy, self.LR: lr} 
+        if step_type == "train":
+            fetches = [self.apply_grad, self.loss, self.summary_op,
+                       self.print, self.step_count, self.metrics_op]
+            out = self.sess.run(fetches, feed_dict)
+            loss, summary, step_count = out[1], out[2], out[4]
+
+            self.train_writer.add_summary(summary, global_step=step_count)
+        elif step_type == "debug":
+            fetchs = [self.apply_grad]
+            options = tf.RunOptions(trace_level=3)
+            run_metadata = tf.RunMetadata()
+            out = self.sess.run(fetches, feed_dict,
+                                options=options, run_metadata=run_metadata)
+        else:
+            fetchs = [self.softmax, self.loss, self.summary_op, self.print,
+                      self.step_count, self.metrics_op]
+            out = self.sess.run(fetchs, feed_dict)
+            softmax, loss, summary, step_count = out[0], out[1], out[2], out[4]
+
+            if step_type == "val":
+                self.val_writer.add_summary(summary, global_step=step_count)
+            elif step_type == "test":
+                self.test_writer.add_summary(summary, global_step=step_count)
+
+            # display the result of each element of the validation batch
+            if self.params["VIS"]["VALIDATION_STEP"]:
+                i = random.randint(0, len(data_npy)-1)
+                x, y, yp = data_npy[i], label_npy[i], softmax[i]
+                name = "{}/{}_{}".format(cur_dir, step_count,
+                                         utils.get_file_name(data[i])[0:-2])
+                vis.img_sequence(x, "{}_x.png".format(name))
+                vis.voxel_binary(y, "{}_y.png".format(name))
+                vis.voxel_binary(yp, "{}_yp.png".format(name))
+
+        return loss
+
+    def save(self):
+        cur_dir = self.get_cur_epoch_dir()
+        epoch_name = utils.grep_epoch_name(cur_dir)
+        model_builder = tf.saved_model.builder.SavedModelBuilder(
+            cur_dir + "/model")
+        model_builder.add_meta_graph_and_variables(self.sess, [epoch_name])
+        model_builder.save()
+
+    def get_params(self):
+        utils.make_dir(self.MODEL_DIR)
+        with open(self.MODEL_DIR+"/params.json") as fp:
+            return json.load(fp)
+
+    def create_epoch_dir(self):
+        cur_ind = self.epoch_index()
+        save_dir = os.path.join(self.MODEL_DIR, "epoch_{}".format(cur_ind+1))
+        utils.make_dir(save_dir)
+        return save_dir
+
+    def get_cur_epoch_dir(self):
+        cur_ind = self.epoch_index()
+        save_dir = os.path.join(
+            self.MODEL_DIR, "epoch_{}".format(cur_ind))
+        return save_dir
+
+    def epoch_index(self):
+        return utils.get_latest_epoch_index(self.MODEL_DIR)
+
+
 
     def feature_maps(self, x):
         pass

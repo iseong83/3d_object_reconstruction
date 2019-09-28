@@ -17,7 +17,7 @@
         "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4,
-	"LOSS_FCN": "FOCAL_LOSS"
+	"LOSS_FCN": "SOFTMAX"
     },
     "DIRS": {
         "DATA": "data",
