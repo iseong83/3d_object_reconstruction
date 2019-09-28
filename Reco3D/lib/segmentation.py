@@ -9,7 +9,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 from PIL import Image, ExifTags
 
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 model_dict = {'mobile_coco':'mobilenetv2_coco_voctrainval',
         'xception_coco': 'xception_coco_voctrainaug',
