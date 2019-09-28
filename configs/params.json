@@ -46,7 +46,7 @@
     },
     "SESSIONS": {
         "ROBUST": "",
-        "LONGEST": "models_local/model_2019-09-15_22:25:37/epoch_153",
+        "LONGEST": "models_local/model_2019-09-25_15:56:57/epoch_199",
         "BEST": "",
         "LSTM": "",
         "HISTOGRAM": "",
