@@ -370,6 +370,7 @@ class Network_restored:
 
         with open(self.MODEL_DIR + '/params.json', 'w') as f:
             json.dump(self.params, f)
+
         graph = self.sess.graph
         with graph.as_default():
             self.X = graph.get_tensor_by_name('Data/Placeholder:0')
@@ -414,16 +415,6 @@ class Network_restored:
             self.apply_grad = optimizer.apply_gradients(
                 grads_and_vars, global_step=self.step_count)
 
-            # the optimzer has not been optimized, initialize only new optimizer
-            uninitialized_vars = []
-            for var in tf.all_variables():
-                try:
-                    self.sess.run(var)
-                except tf.errors.FailedPreconditionError:
-                    uninitialized_vars.append(var)
-            
-            tf.initialize_variables(uninitialized_vars)
-
             # metric
             print("metrics")
             with tf.name_scope("metrics"):
@@ -443,8 +434,24 @@ class Network_restored:
             # config=tf.ConfigProto(log_device_placement=True)
             print("setup")
             self.summary_op = tf.summary.merge_all()
-            self.sess = tf.InteractiveSession()
-
+            #self.sess = tf.InteractiveSession()
+            # the optimzer has not been optimized, initialize only new optimizer
+            #self.sess.run(tf.variables_initializer(optimizer.variables()))
+            #tf.variables_initializer(
+            #        [v for v in tf.global_variables() 
+            #            if v.name.split(':')[0] in 
+            #            set(self.sess.run(tf.report_uninitialized_variables()))
+            #            ])
+            def initialize_uninitialized(sess):
+                global_vars          = tf.global_variables()
+                is_not_initialized   = sess.run([tf.is_variable_initialized(var) for var in global_vars])
+                not_initialized_vars = [v for (v, f) in zip(global_vars, is_not_initialized) if not f]
+                print ("-->", len(global_vars), len(is_not_initialized), len(not_initialized_vars))
+            
+                if len(not_initialized_vars):
+                    sess.run(tf.variables_initializer(not_initialized_vars))
+            initialize_uninitialized(self.sess)
+            self.sess.run(tf.local_variables_initializer())
             # summaries
             print("summaries")
             if self.params["MODE"] == "TEST":
