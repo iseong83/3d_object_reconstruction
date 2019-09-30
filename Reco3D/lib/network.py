@@ -7,8 +7,7 @@ import random
 import keyboard
 import numpy as np
 
-#import tensorflow as tf
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 tf.disable_v2_behavior()
 
 import matplotlib.pyplot as plt
@@ -356,6 +355,62 @@ class Network_restored:
             except:
                 pass
 
+    def feature_maps(self, x):
+        pass
+
+class Network_retrain:
+    def __init__(self, model_dir):
+        if "epoch" not in model_dir:
+            model_dir = utils.get_latest_epoch(model_dir)
+
+        self.epoch_name = utils.grep_epoch_name(model_dir)
+        #imported = tf.saved_model.load_v2(model_dir+'/model', tags=[self.epoch_name])
+        #self.model_info = {
+        #        'bottleneck_tensor_name':'SENet_Decoder/conv_vox/BiasAdd',
+        #        'bottleneck_tensor_size':(32,32,32,2)
+        #        }
+        #self.graph = tf.get_default_graph()
+        #with tf.Graph().as_default() as graph, tf.Session() as sess:
+        #    tf.saved_model.loader.load(
+        #        sess, [self.epoch_name], model_dir + "/model")
+        #    self.graph = tf.get_default_graph()
+        #    graph_def = tf.get_default_graph().as_graph_def()
+        #    self.bottleneck_tensor = tf.import_graph_def(
+        #            graph_def, name='',
+        #            return_elements=[self.model_info['bottleneck_tensor_name']])
+        #self.graph = graph
+        #print ('--->', self.bottleneck_tensor)
+
+        #self.graph = tf.get_default_graph()
+        #with tf.Session() as sess:
+        #    tf.saved_model.loader.load(
+        #        sess, [self.epoch_name], model_dir + "/model")
+        #    graph_def = sess.graph.as_graph_def()
+        #    for n in graph_def.node:
+        #        nn = self.graph.as_graph_def().node.add()
+        #        nn.CopyFrom(n)
+        #        print (n.name)
+        #        if n.name == 'SENet_Decoder/conv_vox/BiasAdd':
+        #            break
+        #print ('--->', self.graph)
+
+        #self.sess = tf.Session(graph=tf.Graph())
+        self.sess = tf.Session()
+        tf.saved_model.loader.load(
+            self.sess, [self.epoch_name], model_dir + "/model")
+
+           ## create new Graph
+        #self.graph_def = tf.GraphDef()
+        #with tf.Session() as sess:
+        #    tf.saved_model.loader.load(
+        #            sess, [self.epoch_name], model_dir + "/model")
+        #    graph_def = tf.get_default_graph().as_graph_def()
+        #    for n in graph_def.node:
+        #        nn = self.graph_def.node.add()
+        #        nn.CopyFrom(n)
+        #        #print (n.name)
+        #        if n.name == 'SENet_Decoder/conv_vox/BiasAdd':
+        #            break
     def retrain(self, params=None):
         # read params
         if params is None:
@@ -371,16 +426,37 @@ class Network_restored:
         with open(self.MODEL_DIR + '/params.json', 'w') as f:
             json.dump(self.params, f)
 
+        #with tf.get_default_graph() as graph:
+            #with self.graph.as_default() as graph:
         graph = self.sess.graph
-        with graph.as_default():
+        #with tf.Graph().as_default():
+        if True:
             self.X = graph.get_tensor_by_name('Data/Placeholder:0')
             self.Y_onehot = graph.get_tensor_by_name('Labels/Placeholder:0')
             self.LR = graph.get_tensor_by_name('LearningRate/Placeholder:0')
 
             # TODO: make to read network name instead of hard coding
-            self.logits = graph.get_tensor_by_name('SENet_Decoder/conv_vox/BiasAdd:0')
+            #self.logits = graph.get_tensor_by_name('SENet_Decoder/conv_vox/BiasAdd:0')
+
+            hidden_state = graph.get_tensor_by_name('Recurrent_module/while/Exit:0')
+            # decoder
+            print("decoder")
+            if isinstance(hidden_state, tuple):
+                hidden_state = hidden_state[0]
+            if self.params["TRAIN"]["DECODER_MODE"] == "DILATED":
+                de = decoder.Dilated_Decoder(hidden_state)
+            elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL":
+                de = decoder.Residual_Decoder(hidden_state)
+            elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET":
+                de = decoder.SENet_Decoder(hidden_state)
+            else:
+                de = decoder.Simple_Decoder(hidden_state)
+            self.logits = de.out_tensor
+
 
             print("loss")
+            #self.softmax = graph.get_tensor_by_name('Loss_Voxel_Softmax/clip_by_value:0')
+            #self.loss = graph.get_tensor_by_name('Loss_Voxel_Softmax/Mean:0')
             if self.params["TRAIN"]["LOSS_FCN"] == "FOCAL_LOSS":
                 voxel_loss = loss.Focal_Loss(self.Y_onehot, self.logits)
                 self.softmax = voxel_loss.pred
@@ -392,32 +468,32 @@ class Network_restored:
 
             # misc
             print("misc")
+            t = tf.constant(self.params["TRAIN"]["TIME_STEP_COUNT"])
+            #self.step_count = graph.get_tensor_by_name('misc_2/step_count:0')
+            #self.print = graph.get_tensor_by_name('misc_2/Print:0')
             with tf.name_scope("misc"):
-                self.step_count = tf.Variable(
-                    0, trainable=False, name="step_count")
+                self.step_count = tf.Variable(0, trainable=False, name="step_count")
                 self.print = tf.Print(
-                    self.loss, [self.step_count, self.loss, self.step_count])
+                    self.loss, [self.step_count, self.loss, t])
 
             # optimizer
             print("optimizer")
+            #optimizer = graph.get_tensor_by_name('Adam:0')
             if self.params["TRAIN"]["OPTIMIZER"] == "ADAM":
                 optimizer = tf.train.AdamOptimizer(
                     learning_rate=self.LR, epsilon=self.params["TRAIN"]["ADAM_EPSILON"], name='NewAdam')
-                    #learning_rate=self.params["TRAIN"]["ADAM_LEARN_RATE"], epsilon=self.params["TRAIN"]["ADAM_EPSILON"])
                 tf.summary.scalar("adam_learning_rate", optimizer._lr)
             else:
                 optimizer = tf.train.GradientDescentOptimizer(
                     learning_rate=self.LR)
-                    #learning_rate=self.params["TRAIN"]["GD_LEARN_RATE"])
                 tf.summary.scalar("learning_rate", optimizer._learning_rate)
-
             grads_and_vars = optimizer.compute_gradients(self.loss)
             self.apply_grad = optimizer.apply_gradients(
                 grads_and_vars, global_step=self.step_count)
 
-            # metric
+            ## metric
             print("metrics")
-            with tf.name_scope("metrics"):
+            with tf.name_scope("newmetrics"):
                 Y = tf.argmax(self.Y_onehot, -1)
                 predictions = tf.argmax(self.softmax, -1)
                 acc, acc_op = tf.metrics.accuracy(Y, predictions)
@@ -435,13 +511,6 @@ class Network_restored:
             print("setup")
             self.summary_op = tf.summary.merge_all()
             #self.sess = tf.InteractiveSession()
-            # the optimzer has not been optimized, initialize only new optimizer
-            #self.sess.run(tf.variables_initializer(optimizer.variables()))
-            #tf.variables_initializer(
-            #        [v for v in tf.global_variables() 
-            #            if v.name.split(':')[0] in 
-            #            set(self.sess.run(tf.report_uninitialized_variables()))
-            #            ])
             def initialize_uninitialized(sess):
                 global_vars          = tf.global_variables()
                 is_not_initialized   = sess.run([tf.is_variable_initialized(var) for var in global_vars])
@@ -451,6 +520,8 @@ class Network_restored:
                 if len(not_initialized_vars):
                     sess.run(tf.variables_initializer(not_initialized_vars))
             initialize_uninitialized(self.sess)
+            print ('trainable vars:', len(tf.trainable_variables()))
+
             self.sess.run(tf.local_variables_initializer())
             # summaries
             print("summaries")
@@ -537,8 +608,6 @@ class Network_restored:
 
     def epoch_index(self):
         return utils.get_latest_epoch_index(self.MODEL_DIR)
+        #return int(self.epoch_name.split('_')[1])
 
 
-
-    def feature_maps(self, x):
-        pass
