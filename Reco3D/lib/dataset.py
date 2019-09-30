@@ -35,15 +35,22 @@ def id_to_path(obj_id, data_dir="./data/ShapeNetRendering/", label_dir="./data/S
 
 # loading functions
 def load_img(img_path):
-    return np.array(Image.open(img_path))
+    img = Image.open(img_path)
+    if img.size != (137, 137, 137):
+        max_size = max(img.size)
+        ratio = 137/max_size
+        size = tuple([int(x*ratio) for x in img.size])
+        img.thumbnail(size,Image.ANTIALIAS)
+
+    return np.array(img)
 
 
 def load_vox(vox_path):
     with open(vox_path, 'rb') as f:
         voxel = binvox_rw.read_as_3d_array(f).data
         #if False:
-        if np.shape(voxel) != (32, 32, 32):
-            voxel = resize(voxel, (32, 32, 32), anti_aliasing=True,anti_aliasing_sigma=0.01)>0
+        #if np.shape(voxel) != (32, 32, 32):
+        #    voxel = resize(voxel, (32, 32, 32), anti_aliasing=True,anti_aliasing_sigma=0.01)>0
         return to_categorical(voxel)
 
 
@@ -258,7 +265,7 @@ def prepare_dataset():
         os.system("tar -xvzf {0} -C ./data/".format(archive))
 
 
-def preprocess_dataset():
+def preprocess_dataset(is_high_res=False):
     params = utils.read_params()
     dataset_size = params["DATASET_SIZE"]
     output_dir = params["DIRS"]["OUTPUT"]
@@ -266,8 +273,12 @@ def preprocess_dataset():
     data_dir = params["DIRS"]["DATA"]
 
     if not os.path.isfile("{}/paths.csv".format(output_dir)):
-        dataset.create_path_csv(
-            "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox32".format(data_dir))
+        if is_high_res:
+            dataset.create_path_csv(
+                "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox128".format(data_dir))
+        else:
+            dataset.create_path_csv(
+                "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox32".format(data_dir))
 
     path_list = pd.read_csv(
         "{}/paths.csv".format(output_dir), index_col=0).as_matrix()

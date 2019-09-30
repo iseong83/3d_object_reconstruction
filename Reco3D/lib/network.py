@@ -44,7 +44,10 @@ class Network:
         with tf.name_scope("Data"):
             self.X = tf.placeholder(tf.float32, [None, None, None, None, None])
         with tf.name_scope("Labels"):
-            self.Y_onehot = tf.placeholder(tf.float32, [None, 32, 32, 32, 2])
+            if "128" in self.params["TRAIN"]["DECODER_MODE"]:
+                self.Y_onehot = tf.placeholder(tf.float32, [None, 128, 128, 128, 2])
+            else:
+                self.Y_onehot = tf.placeholder(tf.float32, [None, 32, 32, 32, 2])
         with tf.name_scope("LearningRate"):
             self.LR = tf.placeholder(tf.float32, [])
 
@@ -134,8 +137,12 @@ class Network:
             de = decoder.Dilated_Decoder(hidden_state)
         elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL":
             de = decoder.Residual_Decoder(hidden_state)
+        elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL128":
+            de = decoder.Residual_Decoder128(hidden_state)
         elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET":
             de = decoder.SENet_Decoder(hidden_state)
+        elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET128":
+            de = decoder.SENet_Decoder128(hidden_state)
         else:
             de = decoder.Simple_Decoder(hidden_state)
         self.logits = de.out_tensor
@@ -148,7 +155,10 @@ class Network:
                 for fv in feature_voxels:
                     fv_slice = fv[0, :, :, 0, 0]
                     fv_shape = fv_slice.get_shape().as_list()
-                    fv_slice = tf.pad(fv_slice, [[0, 0], [32-fv_shape[0], 0]])
+                    if "128" in self.params["TRAIN"]["DECODER_MODE"]:
+                        fv_slice = tf.pad(fv_slice, [[0, 0], [128-fv_shape[0], 0]])
+                    else:
+                        fv_slice = tf.pad(fv_slice, [[0, 0], [32-fv_shape[0], 0]])
                     fv_list.append(fv_slice)
                 fv_img = tf.concat(fv_list, axis=0)
                 tf.summary.image("feature_voxel_list", tf.expand_dims(
