@@ -51,7 +51,7 @@ def load_images(img_path, model, n_views=5):
             new_im.paste(object,((d_size-size[0])//2,(d_size-size[1])//2))
             print ('-->', np.shape(new_im))
             original_img.append(resized_im)
-            segmented_img.append(object)
+            segmented_img.append(new_im)
     print ("Loaded example")
     return np.stack(original_img), np.stack(segmented_img)
 
