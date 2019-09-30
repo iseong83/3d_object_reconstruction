@@ -31,22 +31,25 @@ def load_images(img_path, model, n_views=5):
     print ('Loading Images at {}'.format(img_path))
     original_img = list()
     segmented_img = list()
+    d_size = 137
     for root, _, files in os.walk(img_path):
         for i, file in enumerate(files):
             if i >= n_views: break
             img = load_image(os.path.join(root,file))
             # DeepLab for image segmentation
             resized_im, seg_map = model.run(img)
-            print ('->', np.shape(resized_im))
             mask = np.repeat(seg_map[:,:,np.newaxis],3,axis=2)
             object = np.where(mask>0, np.array(resized_im), 0)
             # resize them
-            min_size, max_size = min(np.shape(resized_im)[:2]), max(np.shape(resized_im)[:2])
-            size = math.ceil(max_size*137/min_size)
+            max_size = max(resized_im.size)
+            ratio = d_size/max_size
+            size = tuple([int(x*ratio) for x in resized_im.size])
             object = Image.fromarray(object)
-            resized_im.thumbnail((size,size), Image.ANTIALIAS)
-            object.thumbnail((size,size), Image.ANTIALIAS)
-
+            resized_im.thumbnail(size, Image.ANTIALIAS)
+            object.thumbnail(size, Image.ANTIALIAS)
+            new_im = Image.new("RGB",(d_size,d_size))
+            new_im.paste(object,((d_size-size[0])//2,(d_size-size[1])//2))
+            print ('-->', np.shape(new_im))
             original_img.append(resized_im)
             segmented_img.append(object)
     print ("Loaded example")
@@ -69,6 +72,7 @@ def main():
     # show example image
     #vis.multichannel(org_img[0])
     vis.img_sequence(org_img)
+    vis.img_sequence(seg_img)
     seg_img = preprocessor.Preprocessor_npy(np.expand_dims(seg_img,axis=0)).out_tensor
 
     # make inference

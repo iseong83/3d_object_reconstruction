@@ -32,16 +32,18 @@ def id_to_path(obj_id, data_dir="./data/ShapeNetRendering/", label_dir="./data/S
     ret_2 = os.path.join(label_dir, regex.group(1), regex.group(2))
     return ret_1, ret_2
 
+def resize_img(img):
+    max_size = max(img.size)
+    ratio = 137/max_size
+    size = tuple([int(x*ratio) for x in img.size])
+    img.thumbnail(size,Image.ANTIALIAS)
+
 
 # loading functions
 def load_img(img_path):
     img = Image.open(img_path)
     if img.size != (137, 137, 137):
-        max_size = max(img.size)
-        ratio = 137/max_size
-        size = tuple([int(x*ratio) for x in img.size])
-        img.thumbnail(size,Image.ANTIALIAS)
-
+        resize_img(img)
     return np.array(img)
 
 

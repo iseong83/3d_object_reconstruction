@@ -20,7 +20,7 @@
 	"LOSS_FCN": "SOFTMAX"
     },
     "DIRS": {
-        "DATA": "data_v2",
+        "DATA": "data",
         "DATA_PREPROCESSED": "data_preprocessed",
         "OUTPUT": "output",
         "MODELS_LOCAL": "models_local",

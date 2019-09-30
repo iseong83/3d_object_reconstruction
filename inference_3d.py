@@ -69,6 +69,10 @@ def main():
         X, Y = dataset.load_random_data_Pix3D()
     else:
         X = load_images(image_dir, n_views=nviews)
+
+    fname = '03001627_120735afde493c277ff6ace05b36a5'
+    X = np.load(os.path.join('data_128_preprocessed',fname+'_x.npy'))
+    Y = np.load(os.path.join('data_128_preprocessed',fname+'_y.npy'))
     # show example image
     print ('---->',X.shape)
     if len(np.shape(X)) < 4:
@@ -85,6 +89,7 @@ def main():
     
     print ("Inference time {} sec".format(t2-t1))
     # show inference
+    vis.voxel_binary(Y)
     if test or random_data:
         vis.voxel_binary(Y)
     vis.voxel_binary(out[0])
