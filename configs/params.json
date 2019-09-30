@@ -1,9 +1,9 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 326,
+    "DATASET_SIZE": 1000,
     "TRAIN": {
         "BATCH_SIZE": 8,
-        "EPOCH_COUNT": 100,
+        "EPOCH_COUNT": 1,
         "TIME_STEP_COUNT": 1,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,

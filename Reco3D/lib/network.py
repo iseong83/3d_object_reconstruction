@@ -229,6 +229,7 @@ class Network:
         print("initialize")
         tf.global_variables_initializer().run()
         tf.local_variables_initializer().run()
+        print ('trainable vars:', len(tf.trainable_variables()))
         print("...done!")
 
     def step(self, data, label, data_npy, step_type):
