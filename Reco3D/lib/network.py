@@ -409,7 +409,14 @@ class Network_retrain:
         self.sess = tf.Session()
         tf.saved_model.loader.load(
             self.sess, [self.epoch_name], model_dir + "/model")
-
+        #output_nodes = list()
+        #for n in tf.get_default_graph().as_graph_def().node:
+        #    output_nodes.append(n.name)
+        #    #print (n.name)
+        #    if n.name == 'SENet_Decoder/conv_vox/BiasAdd':
+        #        break
+        #output_graph_def = tf.graph_util.convert_variables_to_constants(self.sess, sess.graph_def, output_nodes)
+ 
            ## create new Graph
         #self.graph_def = tf.GraphDef()
         #with tf.Session() as sess:
@@ -439,7 +446,8 @@ class Network_retrain:
 
         #with tf.get_default_graph() as graph:
             #with self.graph.as_default() as graph:
-        graph = self.sess.graph
+        #graph = self.sess.graph
+        graph = tf.get_default_graph()
         #with tf.Graph().as_default():
         if True:
             self.X = graph.get_tensor_by_name('Data/Placeholder:0')
@@ -448,21 +456,25 @@ class Network_retrain:
 
             # TODO: make to read network name instead of hard coding
             #self.logits = graph.get_tensor_by_name('SENet_Decoder/conv_vox/BiasAdd:0')
+            freeze_layer = graph.get_tensor_by_name('SENet_Decoder/block_seresnet_decoder_4/relu_vox_1/relu:0')
+            # stop graident and make is identity
+            freeze_layer = tf.stop_gradient(freeze_layer)
+            self.logits = decoder.conv_vox(freeze_layer, 32, 2)
 
-            hidden_state = graph.get_tensor_by_name('Recurrent_module/while/Exit:0')
-            # decoder
-            print("decoder")
-            if isinstance(hidden_state, tuple):
-                hidden_state = hidden_state[0]
-            if self.params["TRAIN"]["DECODER_MODE"] == "DILATED":
-                de = decoder.Dilated_Decoder(hidden_state)
-            elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL":
-                de = decoder.Residual_Decoder(hidden_state)
-            elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET":
-                de = decoder.SENet_Decoder(hidden_state)
-            else:
-                de = decoder.Simple_Decoder(hidden_state)
-            self.logits = de.out_tensor
+            #hidden_state = graph.get_tensor_by_name('Recurrent_module/while/Exit:0')
+            ## decoder
+            #print("decoder")
+            #if isinstance(hidden_state, tuple):
+            #    hidden_state = hidden_state[0]
+            #if self.params["TRAIN"]["DECODER_MODE"] == "DILATED":
+            #    de = decoder.Dilated_Decoder(hidden_state)
+            #elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL":
+            #    de = decoder.Residual_Decoder(hidden_state)
+            #elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET":
+            #    de = decoder.SENet_Decoder(hidden_state)
+            #else:
+            #    de = decoder.Simple_Decoder(hidden_state)
+            #self.logits = de.out_tensor
 
 
             print("loss")

@@ -1,10 +1,10 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 14,
+    "DATASET_SIZE": 325,
     "TRAIN": {
-        "BATCH_SIZE": 4,
+        "BATCH_SIZE": 8,
         "EPOCH_COUNT": 100,
-        "TIME_STEP_COUNT": 5,
+        "TIME_STEP_COUNT": 1,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
         "ADAM_LEARN_RATE": 0.00001,
@@ -12,8 +12,8 @@
         "VALIDATION_INTERVAL": 25,
         "SHUFFLE_IMAGE_SEQUENCE": false,
         "INITIALIZER": "XAVIER",
-        "ENCODER_MODE": "RESIDUAL",
-        "DECODER_MODE": "RESIDUAL128",
+        "ENCODER_MODE": "SERESNET",
+        "DECODER_MODE": "SERESNET",
         "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4,
@@ -24,8 +24,7 @@
         "DATA_PREPROCESSED": "data_preprocessed",
         "OUTPUT": "output",
         "MODELS_LOCAL": "models_local",
-        "MODELS_REMOTE": "models_remote",
-	"DATA_PIX3D": "../data_pix3d/preprocessed_data"
+        "MODELS_REMOTE": "models_remote"
     },
     "VIS": {
         "VALIDATION_STEP": false,
