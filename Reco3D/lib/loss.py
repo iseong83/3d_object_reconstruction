@@ -25,24 +25,26 @@ class Focal_Loss:
             FL = -alpha * (z-p)^gamma * log(p) -(1-alpha) * p^gamma * log(1-p)
                  ,which alpha = 0.25, gamma = 2, p = sigmoid(x), z = target_tensor.
     """
-    def __init__(self, Y, logits, alpha=0.9, gamma=0):
+    def __init__(self, Y, logits, alpha=0.90, gamma=0.5):
         with tf.name_scope("Focal_Loss"):
             label = Y
             epsilon = 1e-10
-            #self.pred = tf.nn.sigmoid(label)
+            self.pred = tf.clip_by_value(
+                tf.nn.sigmoid(logits), epsilon, 1-epsilon)
             ## cross-entropy
             #cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=label, logits=logits)
-            self.pred = tf.clip_by_value(
-                tf.nn.softmax(logits), epsilon, 1-epsilon)
+            #self.pred = tf.clip_by_value(
+            #    tf.nn.softmax(logits), epsilon, 1-epsilon)
             log_pred = tf.log(self.pred)
+            p_t = tf.reduce_sum(-tf.multiply(label,self.pred), axis=-1)
             cross_entropy = tf.reduce_sum(-tf.multiply(label,log_pred), axis=-1)
 
             #alpha_ = label * alpha * (1.-label) * (1.-alpha)
-            alpha_ = label[...,1] * alpha + (1.-label[...,1]) * (1.-alpha)
-            p_t = tf.where(label[...,1] == 1, self.pred[...,1], self.pred[...,0])
-            losses = tf.multiply(tf.pow(alpha_ * (1.-p_t), gamma), cross_entropy)
+            _alpha = label[...,1] * alpha + label[...,0] * (1.-alpha)
 
+            losses = tf.multiply(tf.pow( _alpha*(1.-p_t), gamma, cross_entropy))
             losses = tf.reduce_mean(losses, axis=[1, 2, 3])
+
             self.loss = tf.reduce_mean(losses)
 
 

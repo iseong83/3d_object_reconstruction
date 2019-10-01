@@ -221,6 +221,8 @@ def create_path_csv(data_dir, label_dir):
         data_row = [os.path.dirname(n)+"_"+os.path.basename(n)]
         data_row += construct_file_path_list_from_dir(d, [".png"])
         data_row += construct_file_path_list_from_dir(l, [".binvox"])
+        if not construct_file_path_list_from_dir(l, [".binvox"]):
+            continue
         table.append(data_row)
 
     paths = pd.DataFrame(table)
@@ -277,7 +279,7 @@ def preprocess_dataset(is_high_res=False):
     if not os.path.isfile("{}/paths.csv".format(output_dir)):
         if is_high_res:
             dataset.create_path_csv(
-                "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox128".format(data_dir))
+                "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox64".format(data_dir))
         else:
             dataset.create_path_csv(
                 "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox32".format(data_dir))

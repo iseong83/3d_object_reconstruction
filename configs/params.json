@@ -1,6 +1,6 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 325,
+    "DATASET_SIZE": 1400,
     "TRAIN": {
         "BATCH_SIZE": 8,
         "EPOCH_COUNT": 100,
@@ -13,14 +13,14 @@
         "SHUFFLE_IMAGE_SEQUENCE": false,
         "INITIALIZER": "XAVIER",
         "ENCODER_MODE": "SERESNET",
-        "DECODER_MODE": "SERESNET",
+        "DECODER_MODE": "SERESNET64",
         "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4,
 	"LOSS_FCN": "SOFTMAX"
     },
     "DIRS": {
-        "DATA": "data",
+        "DATA": "data_v2",
         "DATA_PREPROCESSED": "data_preprocessed",
         "OUTPUT": "output",
         "MODELS_LOCAL": "models_local",

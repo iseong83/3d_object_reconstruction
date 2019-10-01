@@ -44,8 +44,8 @@ class Network:
         with tf.name_scope("Data"):
             self.X = tf.placeholder(tf.float32, [None, None, None, None, None])
         with tf.name_scope("Labels"):
-            if "128" in self.params["TRAIN"]["DECODER_MODE"]:
-                self.Y_onehot = tf.placeholder(tf.float32, [None, 128, 128, 128, 2])
+            if "64" in self.params["TRAIN"]["DECODER_MODE"]:
+                self.Y_onehot = tf.placeholder(tf.float32, [None, 64, 64, 64, 2])
             else:
                 self.Y_onehot = tf.placeholder(tf.float32, [None, 32, 32, 32, 2])
         with tf.name_scope("LearningRate"):
@@ -137,12 +137,12 @@ class Network:
             de = decoder.Dilated_Decoder(hidden_state)
         elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL":
             de = decoder.Residual_Decoder(hidden_state)
-        elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL128":
-            de = decoder.Residual_Decoder128(hidden_state)
+        elif self.params["TRAIN"]["DECODER_MODE"] == "RESIDUAL64":
+            de = decoder.Residual_Decoder64(hidden_state)
         elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET":
             de = decoder.SENet_Decoder(hidden_state)
-        elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET128":
-            de = decoder.SENet_Decoder128(hidden_state)
+        elif self.params["TRAIN"]["DECODER_MODE"] == "SERESNET64":
+            de = decoder.SENet_Decoder64(hidden_state)
         else:
             de = decoder.Simple_Decoder(hidden_state)
         self.logits = de.out_tensor
