@@ -42,7 +42,7 @@ class Focal_Loss:
             #alpha_ = label * alpha * (1.-label) * (1.-alpha)
             _alpha = label[...,1] * alpha + label[...,0] * (1.-alpha)
 
-            losses = tf.multiply(tf.pow( _alpha*(1.-p_t), gamma, cross_entropy))
+            losses = tf.multiply(tf.pow( _alpha*(1.-p_t), gamma), cross_entropy)
             losses = tf.reduce_mean(losses, axis=[1, 2, 3])
 
             self.loss = tf.reduce_mean(losses)
