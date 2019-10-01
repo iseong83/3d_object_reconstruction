@@ -155,8 +155,8 @@ class Network:
                 for fv in feature_voxels:
                     fv_slice = fv[0, :, :, 0, 0]
                     fv_shape = fv_slice.get_shape().as_list()
-                    if "128" in self.params["TRAIN"]["DECODER_MODE"]:
-                        fv_slice = tf.pad(fv_slice, [[0, 0], [128-fv_shape[0], 0]])
+                    if "64" in self.params["TRAIN"]["DECODER_MODE"]:
+                        fv_slice = tf.pad(fv_slice, [[0, 0], [64-fv_shape[0], 0]])
                     else:
                         fv_slice = tf.pad(fv_slice, [[0, 0], [32-fv_shape[0], 0]])
                     fv_list.append(fv_slice)
