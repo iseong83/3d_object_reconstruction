@@ -89,7 +89,6 @@ def main():
     
     print ("Inference time {} sec".format(t2-t1))
     # show inference
-    vis.voxel_binary(Y)
     if test or random_data:
         vis.voxel_binary(Y)
     vis.voxel_binary(out[0])

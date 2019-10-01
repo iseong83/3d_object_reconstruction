@@ -361,7 +361,7 @@ class Network_restored:
                     n = len(op.inputs[0].shape)
                 if name in op.name and n == ndim:
                     ret = op.name+":0"
-                    #print(ret)
+                    print(ret)
                     return ret
             except:
                 pass
