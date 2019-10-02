@@ -1,10 +1,10 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 2000,
+    "DATASET_SIZE": 307,
     "TRAIN": {
         "BATCH_SIZE": 8,
-        "EPOCH_COUNT": 100,
-        "TIME_STEP_COUNT": 5,
+        "EPOCH_COUNT": 300,
+        "TIME_STEP_COUNT": 1,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
         "ADAM_LEARN_RATE": 0.00001,
@@ -17,14 +17,15 @@
         "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4,
-	"LOSS_FCN": "FOCAL_LOSS"
+	"LOSS_FCN": "SOFTMAX"
     },
     "DIRS": {
         "DATA": "data",
         "DATA_PREPROCESSED": "data_preprocessed",
         "OUTPUT": "output",
         "MODELS_LOCAL": "models_local",
-        "MODELS_REMOTE": "models_remote"
+        "MODELS_REMOTE": "models_remote",
+	"DATA_PIX3D": "data_preprocessed_ikea_testset"
     },
     "VIS": {
         "VALIDATION_STEP": false,
@@ -45,7 +46,7 @@
     },
     "SESSIONS": {
         "ROBUST": "",
-        "LONGEST": "models_local/model_2019-09-25_15:56:57/epoch_199",
+        "LONGEST": "models_local/model_2019-09-25_15:56:57/epoch_299",
         "BEST": "",
         "LSTM": "",
         "HISTOGRAM": "",

@@ -456,10 +456,11 @@ class Network_retrain:
 
             # TODO: make to read network name instead of hard coding
             #self.logits = graph.get_tensor_by_name('SENet_Decoder/conv_vox/BiasAdd:0')
-            freeze_layer = graph.get_tensor_by_name('SENet_Decoder/block_seresnet_decoder_4/relu_vox_1/relu:0')
+            freeze_layer = graph.get_tensor_by_name('SENet_Decoder/conv_vox/BiasAdd:0')
+            #freeze_layer = graph.get_tensor_by_name('SENet_Decoder/block_seresnet_decoder_4/relu_vox_1/relu:0')
             # stop graident and make is identity
             freeze_layer = tf.stop_gradient(freeze_layer)
-            self.logits = decoder.conv_vox(freeze_layer, 32, 2)
+            self.logits = decoder.conv_vox(freeze_layer, 2, 2)
 
             #hidden_state = graph.get_tensor_by_name('Recurrent_module/while/Exit:0')
             ## decoder
