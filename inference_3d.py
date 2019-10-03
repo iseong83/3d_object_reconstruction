@@ -70,9 +70,6 @@ def main():
     else:
         X = load_images(image_dir, n_views=nviews)
 
-    #fname = '03001627_124ef426dfa0aa38ff6069724068a578'
-    #X = np.load(os.path.join('data_64_preprocessed',fname+'_x.npy'))
-    #Y = np.load(os.path.join('data_64_preprocessed',fname+'_y.npy'))
     # show example image
     print ('---->',X.shape)
     if len(np.shape(X)) < 4:

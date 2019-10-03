@@ -169,9 +169,15 @@ class Network:
         if self.params["TRAIN"]["LOSS_FCN"] == "FOCAL_LOSS":
             voxel_loss = loss.Focal_Loss(self.Y_onehot, self.logits)
             self.softmax = voxel_loss.pred
-        else:
+        elif self.params["TRAIN"]["LOSS_FCN"] == "WEIGHTED_SOFTMAX":
+            voxel_loss = loss.Weighted_Voxel_Softmax(self.Y_onehot, self.logits)
+            self.softmax = voxel_loss.softmax
+        elif self.params["TRAIN"]["LOSS_FCN"] == "SOFTMAX":
             voxel_loss = loss.Voxel_Softmax(self.Y_onehot, self.logits)
             self.softmax = voxel_loss.softmax
+        else:
+            print ("WRONG LOSS FUNCTION. CHECK LOSS")
+            os.abort()
         self.loss = voxel_loss.loss
         tf.summary.scalar("loss", self.loss)
 

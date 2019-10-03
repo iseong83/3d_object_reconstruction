@@ -18,6 +18,22 @@ class Voxel_Softmax:
             losses = tf.reduce_mean(cross_entropy, axis=[1, 2, 3])
             self.loss = tf.reduce_mean(losses)
 
+class Weighted_Voxel_Softmax:
+    def __init__(self, Y, logits, alpha=0.8):
+        with tf.name_scope("Loss_Weighted_Voxel_Softmax"):
+            label = Y
+            epsilon = 1e-10
+            self.softmax = tf.clip_by_value(
+                tf.nn.softmax(logits), epsilon, 1-epsilon)
+            log_softmax = tf.log(self.softmax)
+
+            cross_entropy = tf.reduce_sum(-tf.multiply(label,
+                                                       log_softmax), axis=-1)
+            _alpha = label[...,1] * alpha + label[...,0] * (1.-alpha)
+            cross_entropy = tf.multiply(_alpha, cross_entropy)
+            losses = tf.reduce_mean(cross_entropy, axis=[1, 2, 3])
+            self.loss = tf.reduce_mean(losses)
+
 
 class Focal_Loss:
     """

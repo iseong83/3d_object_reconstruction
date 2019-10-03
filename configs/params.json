@@ -1,10 +1,10 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 307,
+    "DATASET_SIZE": 6770,
     "TRAIN": {
         "BATCH_SIZE": 8,
-        "EPOCH_COUNT": 300,
-        "TIME_STEP_COUNT": 2,
+        "EPOCH_COUNT": 400,
+        "TIME_STEP_COUNT": 5,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
         "ADAM_LEARN_RATE": 0.00001,
@@ -17,7 +17,7 @@
         "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
         "RNN_CELL_NUM": 4,
-	"LOSS_FCN": "SOFTMAX"
+	"LOSS_FCN": "WEIGHTED_SOFTMAX"
     },
     "DIRS": {
         "DATA": "data",
