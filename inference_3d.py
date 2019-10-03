@@ -30,7 +30,7 @@ def get_args():
     args = parser.parse_args()
     return args
 
-def load_images(img_path, n_views=5):
+def load_images(img_path, n_views=1):
     # load example images
     print ('Loading Images at {}'.format(img_path))
     filenames = list(set(os.path.join(img_path,n) for n in os.listdir(img_path) if n.endswith(".png") or n.endswith('.jpg')))
@@ -70,9 +70,9 @@ def main():
     else:
         X = load_images(image_dir, n_views=nviews)
 
-    fname = '03001627_120735afde493c277ff6ace05b36a5'
-    X = np.load(os.path.join('data_128_preprocessed',fname+'_x.npy'))
-    Y = np.load(os.path.join('data_128_preprocessed',fname+'_y.npy'))
+    #fname = '03001627_124ef426dfa0aa38ff6069724068a578'
+    #X = np.load(os.path.join('data_64_preprocessed',fname+'_x.npy'))
+    #Y = np.load(os.path.join('data_64_preprocessed',fname+'_y.npy'))
     # show example image
     print ('---->',X.shape)
     if len(np.shape(X)) < 4:
@@ -91,6 +91,7 @@ def main():
     # show inference
     if test or random_data:
         vis.voxel_binary(Y)
+    print (np.shape(out))
     vis.voxel_binary(out[0])
     plt.show()
 

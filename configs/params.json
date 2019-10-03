@@ -4,7 +4,7 @@
     "TRAIN": {
         "BATCH_SIZE": 8,
         "EPOCH_COUNT": 300,
-        "TIME_STEP_COUNT": 1,
+        "TIME_STEP_COUNT": 2,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
         "ADAM_LEARN_RATE": 0.00001,

@@ -53,7 +53,7 @@ def load_image(fpath):
 
         return image
     except IOError:
-        print ("Cannot open the image file")
+        print ("Cannot open the image file:", fpath)
         return
 
 def run_visualization_file(fpath, model):

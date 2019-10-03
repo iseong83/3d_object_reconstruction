@@ -51,7 +51,8 @@ def voxel(vox, color=None, f_name=None, npimage=False, view=(30, 45)):
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    ax.voxels(vox, facecolors=color, edgecolor='k')
+    #ax.voxels(vox, facecolors=color, edgecolor='k')
+    ax.voxels(vox, edgecolor='k')
     ax.view_init(view[0], view[1])
 
     if npimage:

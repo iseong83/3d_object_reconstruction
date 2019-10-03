@@ -26,6 +26,19 @@ def get_args():
     args = parser.parse_args()
     return args
 
+def resize_images(resized_im, seg_map):
+    size = resized_im.size
+    kk = np.nonzero(seg_map)
+    xmin, xmax = min(kk[0]), max(kk[0])
+    ymin, ymax = min(kk[1]), max(kk[1])
+       
+    print ('-->', xmin, xmax, ymin, ymax)
+    seg_map = seg_map[xmin:xmax,ymin:ymax]
+    resized_im = np.array(resized_im)[xmin:xmax,ymin:ymax]
+    resized_im = Image.fromarray(resized_im)
+    
+    return resized_im, seg_map
+
 def load_images(img_path, model, n_views=5):
     # load example images and apply segmentation
     print ('Loading Images at {}'.format(img_path))
@@ -37,20 +50,24 @@ def load_images(img_path, model, n_views=5):
             if i >= n_views: break
             img = load_image(os.path.join(root,file))
             # DeepLab for image segmentation
-            resized_im, seg_map = model.run(img)
+            new_img, seg_map = model.run(img)
+            # resize img
+            resized_im, seg_map = resize_images(new_img, seg_map)
             mask = np.repeat(seg_map[:,:,np.newaxis],3,axis=2)
             object = np.where(mask>0, np.array(resized_im), 0)
             # resize them
+
             max_size = max(resized_im.size)
-            ratio = d_size/max_size
+            ratio = 110./max_size # to make a room
+            #ratio = d_size/max_size # to make a room
             size = tuple([int(x*ratio) for x in resized_im.size])
             object = Image.fromarray(object)
             resized_im.thumbnail(size, Image.ANTIALIAS)
             object.thumbnail(size, Image.ANTIALIAS)
             new_im = Image.new("RGB",(d_size,d_size))
             new_im.paste(object,((d_size-size[0])//2,(d_size-size[1])//2))
-            print ('-->', np.shape(new_im))
-            original_img.append(resized_im)
+            print ('-->', np.shape(new_im), np.shape(resized_im))
+            original_img.append(new_img)
             segmented_img.append(new_im)
     print ("Loaded example")
     return np.stack(original_img), np.stack(segmented_img)
@@ -73,6 +90,7 @@ def main():
     #vis.multichannel(org_img[0])
     vis.img_sequence(org_img)
     vis.img_sequence(seg_img)
+    #vis.multichannel(seg_img[0])
     seg_img = preprocessor.Preprocessor_npy(np.expand_dims(seg_img,axis=0)).out_tensor
 
     # make inference
