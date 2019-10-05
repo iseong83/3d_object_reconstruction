@@ -375,7 +375,48 @@ class Network_restored:
     def feature_maps(self, x):
         pass
 
-class Network_retrain:
+# class to retrain/resume the training
+class Network_retrain (Network):
+    def __init__(self, model_dir, params=None):
+        self.model_dir = model_dir
+        self.trained_epoch = utils.grep_epoch_name(model_dir)
+        self.ckpt_dir = os.path.join(model_dir.split('epoch')[0],'checkpoint')
+        self.convert_to_checkpoint()
+        super().__init__(params, do_init=False)
+
+    def convert_to_checkpoint(self):
+        ' create a checkpoint using saved_model.pb'
+        print ('Create a checkpoint')
+        with tf.Session() as sess:
+            tf.saved_model.loader.load(
+                sess, [self.trained_epoch], os.path.join(self.model_dir,"model"))
+            saver=tf.train.Saver()
+            tf.gfile.MakeDirs(self.ckpt_dir)
+            save_path = saver.save(sess, os.path.join(self.ckpt_dir,"model.ckpt"))
+        tf.reset_default_graph()
+        print ('checkpoint is created at {}'.format(self.ckpt_dir))
+
+    def retrain(self):
+        'load weights and initialize variables'
+        print ('Initialize model using {}'.format(self.ckpt_dir))
+        saver = tf.train.Saver()
+        saver.restore(self.sess, tf.train.latest_checkpoint(self.ckpt_dir))
+        tf.get_default_graph()
+        # Initialize all variables needed for DS, but not loaded from ckpt
+        def initialize_uninitialized(sess):
+            global_vars          = tf.global_variables()
+            is_not_initialized   = sess.run([tf.is_variable_initialized(var) for var in global_vars])
+            not_initialized_vars = [v for (v, f) in zip(global_vars, is_not_initialized) if not f]
+            print ("-->", len(global_vars), len(is_not_initialized), len(not_initialized_vars))
+            if len(not_initialized_vars):
+                sess.run(tf.variables_initializer(not_initialized_vars))
+
+        initialize_uninitialized(self.sess)
+        self.sess.run(tf.local_variables_initializer())
+        print ('N trainable vars:', len(tf.trainable_variables()))
+        print ('N local vars:', len(tf.local_variables()))
+
+class Network_fine_tune:
     def __init__(self, model_dir):
         if "epoch" not in model_dir:
             model_dir = utils.get_latest_epoch(model_dir)
