@@ -31,5 +31,5 @@ setuptools.setup(
         'scripts/setup_and_preprocess.py',
         'scripts/re_process.py',
         ],
-    packages=['Reco3D'],
+    packages=['Reco3D','Reco3D.lib','Reco3D.third_party'],
 )

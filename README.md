@@ -4,13 +4,13 @@ Since the official source code ([link](https://github.com/chrischoy/3D-R2N2.git)
 
 # How to Train
 Followed the framework built in [here](https://github.com/micmelesse/3D-reconstruction-with-Neural-Networks.git). 
-Install the requiements
+To install the package
 ```
-pip install -r requirements.txt
+python setup.py install
 ```
 Next step will create directories, download ShapeNet data (chair only), and preprocess data. Training parameters are stored in `configs/params.json` and `DATASET_SIZE` will determine the number of data to preprocess. 
 ```
-python -m scripts.setup_and_preprocess
+python scripts/setup_and_preprocess.py
 ```
 To run the training,
 ```
