@@ -1,6 +1,5 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-#import tensorflow as tf
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -20,10 +19,10 @@ import math
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", help="The model path", 
-            type=str, default='./models_local/model_2019-09-15_22:25:37/epoch_153')
+            type=str, default='./models_local/model_2019-09-25_15:56:57/epoch_299')
     parser.add_argument("--data", help="Example data path", 
-            type=str, default='./examples/chair_a')
-    parser.add_argument("--rnd", help="If want to make with random dataset", action='store_true', default=False)
+            type=str, default='./examples/chair_g')
+    parser.add_argument("--rnd", help="use ShapeNet dataset", action='store_true', default=False)
     parser.add_argument("--test", help="Testing with Pix3D", action='store_true', default=False)
 
  

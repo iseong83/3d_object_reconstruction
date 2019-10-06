@@ -18,7 +18,7 @@ import math
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--reco_model", help="The model path", 
-            type=str, default='./models_local/model_2019-09-15_22:25:37/epoch_153')
+            type=str, default='./models_local/model_2019-09-25_15:56:57/epoch_299')
     parser.add_argument("--seg_model", help="The model name for image semenation", 
             type=str, default='mobile_coco')
     parser.add_argument("--data", help="Example data path", 
@@ -32,7 +32,6 @@ def resize_images(resized_im, seg_map):
     xmin, xmax = min(kk[0]), max(kk[0])
     ymin, ymax = min(kk[1]), max(kk[1])
        
-    print ('-->', xmin, xmax, ymin, ymax)
     seg_map = seg_map[xmin:xmax,ymin:ymax]
     resized_im = np.array(resized_im)[xmin:xmax,ymin:ymax]
     resized_im = Image.fromarray(resized_im)
@@ -58,7 +57,7 @@ def load_images(img_path, model, n_views=5):
             # resize them
 
             max_size = max(resized_im.size)
-            ratio = 110./max_size # to make a room
+            ratio = 120./max_size # to make a room
             #ratio = d_size/max_size # to make a room
             size = tuple([int(x*ratio) for x in resized_im.size])
             object = Image.fromarray(object)
@@ -87,10 +86,13 @@ def main():
     print (org_img.shape, seg_img.shape)
 
     # show example image
-    #vis.multichannel(org_img[0])
-    vis.img_sequence(org_img)
-    vis.img_sequence(seg_img)
-    #vis.multichannel(seg_img[0])
+    if org_img.shape[0] < 3:
+        vis.multichannel(org_img[0])
+        vis.multichannel(seq_img[0])
+    else:
+        vis.img_sequence(seg_img)
+        vis.img_sequence(org_img)
+
     seg_img = preprocessor.Preprocessor_npy(np.expand_dims(seg_img,axis=0)).out_tensor
 
     # make inference
