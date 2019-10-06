@@ -6,6 +6,7 @@ import random
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+tf.compat.v1.disable_v2_behavior()
 import matplotlib.pyplot as plt
 import Reco3D.lib.dataset as dataset
 import Reco3D.lib.network as network

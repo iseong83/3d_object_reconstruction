@@ -1,7 +1,7 @@
 # To install these Python dependencies, please type:
 # pip install -r requirements.txt
 tensorflow-gpu==1.14.0
-numpy==1.14.5
+numpy
 keras
 boto3
 pandas

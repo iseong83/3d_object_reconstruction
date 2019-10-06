@@ -1,6 +1,7 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
+tf.compat.v1.disable_v2_behavior()
 
 import numpy as np
 import matplotlib
@@ -20,7 +21,7 @@ def get_args():
     parser.add_argument("--reco_model", help="The model path", 
             type=str, default='./models/freezed_model')
     parser.add_argument("--seg_model", help="The model name for image semenation", 
-            type=str, default='mobile_coco')
+            type=str, default='xception_coco')
     parser.add_argument("--data", help="Example data path", 
             type=str, default='./examples/chair_x')
     args = parser.parse_args()
