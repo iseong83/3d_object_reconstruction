@@ -174,10 +174,8 @@ def setup_dir():
     params = utils.read_params()
     DIR = params["DIRS"]
     for d in DIR.values():
+        if 'ikea' in d: continue
         utils.make_dir(d)
-
-    # IS: seems not necessary
-    #utils.check_params_json("params.json")
 
 
 def construct_file_path_list_from_dir(dir, file_filter):
