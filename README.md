@@ -10,7 +10,7 @@ pip install -r requirements.txt
 ```
 Next step will create directories, download ShapeNet data (chair only), and preprocess data. Training parameters are stored in `configs/params.json` and `DATASET_SIZE` will determine the number of data to preprocess. 
 ```
-sh build/preprocess_dataset.sh
+python -m scripts.setup_and_preprocess
 ```
 To run the training,
 ```

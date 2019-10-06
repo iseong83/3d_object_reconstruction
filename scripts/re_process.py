@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 from Reco3D.lib import dataset
 
