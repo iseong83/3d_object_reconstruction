@@ -18,11 +18,11 @@ import math
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--reco_model", help="The model path", 
-            type=str, default='./models_local/model_2019-09-25_15:56:57/epoch_299')
+            type=str, default='./models/freezed_model')
     parser.add_argument("--seg_model", help="The model name for image semenation", 
             type=str, default='mobile_coco')
     parser.add_argument("--data", help="Example data path", 
-            type=str, default='./examples/chair_z')
+            type=str, default='./examples/chair_x')
     args = parser.parse_args()
     return args
 

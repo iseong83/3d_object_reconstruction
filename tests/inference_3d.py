@@ -19,7 +19,7 @@ import math
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", help="The model path", 
-            type=str, default='./models_local/model_2019-09-25_15:56:57/epoch_299')
+            type=str, default='./models/freezed_model')
     parser.add_argument("--data", help="Example data path", 
             type=str, default='./examples/chair_g')
     parser.add_argument("--rnd", help="use ShapeNet dataset", action='store_true', default=False)

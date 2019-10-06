@@ -23,7 +23,7 @@
         "DATA": "data",
         "DATA_PREPROCESSED": "data_preprocessed",
         "OUTPUT": "output",
-        "MODELS_LOCAL": "models_local",
+        "MODELS_LOCAL": "models",
 	"DATA_PIX3D": "data_preprocessed_ikea_testset"
     },
     "VIS": {
