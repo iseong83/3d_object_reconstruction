@@ -9,7 +9,6 @@ Clone this repository to a machine with a GPU card,
 ```
 git clone https://github.com/iseong83/3d_object_reconstruction.git
 cd 3d_object_reconstruction
-
 ```
 Create a virtual environment and install packages
 ```
