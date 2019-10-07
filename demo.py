@@ -100,10 +100,15 @@ def main():
     t1 = time.time()
     out = net.predict(seg_img[:,:,:,:,0:3])
     t2 = time.time()
+    out = out[0]
+    bg = out[:,:,:,0]
+    fg = out[:,:,:,1]
+    fg[fg<=0.2] = 0
+    out = np.stack([bg,fg],axis=-1)
     
     print ("Inference time {} sec".format(t2-t1))
     # show inference
-    vis.voxel_binary(out[0])
+    vis.voxel_binary(out)
     plt.show()
 
 if __name__ == '__main__':

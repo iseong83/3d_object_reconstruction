@@ -1,5 +1,5 @@
 # 3D Object Reconstruction
-This is an open source package to generate 3D voxel of object from 2D images. The implementation is based on the [3D-R2N2][1] model with integration of the [SE block][2]. This package also leveraged a image segmentation tool ([DeepLab][4]) to apply the 3D reconstruction into real images. Since the official source code is implemented in Theano, the Tensorflow implementation in [this github repo][3] is used for this project. 
+This is an open source package to generate 3D voxel of object from 2D images. The implementation is based on the [3D-R2N2][1] model with integration of the [SE block][2]. This package also leveraged an image segmentation tool ([DeepLab][4]) to apply the 3D reconstruction to real images. Since the official source code is implemented in Theano, the Tensorflow implementation in [this github repo][3] is used for this project. 
 <!--
 ## Demo
 This project result can be viewed in [here][0]. Note that this demo is running on CPU (m4.xlarge in AWS). 
@@ -12,7 +12,7 @@ cd 3d_object_reconstruction
 ```
 Create a virtual environment and install packages
 ```
-conda create -n 3d_reco python=3.6 # create virtual environment
+conda create -n 3d_reco python=3.6 # create a virtual environment
 source activate 3d_reco            # start the virual environment
 python setup.py install            # install this package and requirements
 ```
@@ -27,11 +27,11 @@ tar -xvf models.tar -C ./models
 Note that, after unzip, the `freezed_model` directory should be in the `models` directory.   
 To run the inference of the 3D object reconstruction on ShapeNet data
 ```
-run tests/inference_3d.py
+python tests/inference_3d.py
 ```
 To run the inference on real images
 ```
-run demo.py
+python demo.py
 ```
 
 ## Train the model
