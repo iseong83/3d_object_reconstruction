@@ -19,7 +19,7 @@ python setup.py install            # install this package and requirements
 ```
 
 ## Run Inference and Demo Locally
-To run the inference/demo with the trained weights, following command will download and save the model in the `models` directory. Note that the weights are only trained ShapeNet chair category and the `freezed_model` directory will be in the `models` directory.
+To run the inference/demo with the trained weights, run following command. It will download and save the model in the `models` directory. Note that the weights are only trained with the ShapeNet `chair` category.
 ```
 python scripts/download_model.py
 ```
