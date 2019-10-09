@@ -6,7 +6,9 @@ import sys
 import math
 import shutil
 import numpy as np
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from skimage import exposure
@@ -49,7 +51,8 @@ def voxel(vox, color=None, f_name=None, npimage=False, view=(30, 45)):
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    ax.voxels(vox, facecolors=color, edgecolor='k')
+    #ax.voxels(vox, facecolors=color, edgecolor='k')
+    ax.voxels(vox, edgecolor='k')
     ax.view_init(view[0], view[1])
 
     if npimage:
@@ -110,6 +113,7 @@ def montage(packed_ims, axis):
     n_tile = math.ceil(math.sqrt(N))
     rows = []
     for i in range(n_tile):
+        if i*n_tile > N: continue
         im = packed_ims[i * n_tile]
         for j in range(1, n_tile):
             ind = i * n_tile + j

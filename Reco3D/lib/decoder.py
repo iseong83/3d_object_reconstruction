@@ -1,4 +1,5 @@
 import tensorflow as tf
+tf.disable_v2_behavior()
 from Reco3D.lib import utils
 
 # batch normalization
@@ -229,6 +230,53 @@ class SENet_Decoder:
             self.out_tensor = conv_vox(
                 cur_tensor, feature_vox_count[-2], feature_vox_count[-1], initializer=init)
 
+class SENet_Decoder64:
+    def __init__(self, hidden_state, feature_vox_count=[128, 128, 128, 64, 32, 2], initializer=None):
+        with tf.name_scope("SENet_Decoder"):
+            if initializer is None:
+                init = tf.contrib.layers.xavier_initializer()
+            else:
+                init = initializer
+
+            N = len(feature_vox_count)
+            hidden_shape = hidden_state.get_shape().as_list()
+            cur_tensor = unpool_vox(hidden_state)
+            cur_tensor = block_residual_decoder(
+                cur_tensor, hidden_shape[-1], feature_vox_count[0], initializer=init)
+            cur_tensor = block_seresnet_decoder(
+                cur_tensor, feature_vox_count[0], initializer=init)
+
+            for i in range(1, N-1):
+                #unpool = True if i <= N-4 else False
+                unpool = True if i <= N-3 else False
+                cur_tensor = block_residual_decoder(
+                    cur_tensor, feature_vox_count[i-1], feature_vox_count[i], initializer=init, unpool=False)
+                cur_tensor = block_seresnet_decoder(
+                    cur_tensor, feature_vox_count[i], initializer=init)
+                if unpool: cur_tensor = unpool_vox(cur_tensor)
+            self.out_tensor = conv_vox(
+                cur_tensor, feature_vox_count[-2], feature_vox_count[-1], initializer=init)
+
+class Residual_Decoder64:
+    def __init__(self, hidden_state, feature_vox_count=[128, 128, 128, 64, 32, 2], initializer=None):
+        with tf.name_scope("Residual_Decoder"):
+            if initializer is None:
+                init = tf.contrib.layers.xavier_initializer()
+            else:
+                init = initializer
+
+            N = len(feature_vox_count)
+            hidden_shape = hidden_state.get_shape().as_list()
+            cur_tensor = unpool_vox(hidden_state)
+            cur_tensor = block_residual_decoder(
+                cur_tensor, hidden_shape[-1], feature_vox_count[0], initializer=init)
+            for i in range(1, N-1):
+                unpool = True if i <= N-3 else False
+                cur_tensor = block_residual_decoder(
+                    cur_tensor, feature_vox_count[i-1], feature_vox_count[i], initializer=init, unpool=unpool)
+
+            self.out_tensor = conv_vox(
+                cur_tensor, feature_vox_count[-2], feature_vox_count[-1], initializer=init)
 
 
 class Residual_Decoder:
@@ -251,6 +299,7 @@ class Residual_Decoder:
 
             self.out_tensor = conv_vox(
                 cur_tensor, feature_vox_count[-2], feature_vox_count[-1], initializer=init)
+
 
 
 class Dilated_Decoder:

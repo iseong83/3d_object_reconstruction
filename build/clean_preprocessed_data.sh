@@ -1,1 +1,0 @@
-rm -rf ./data_preprocessed/*.npy

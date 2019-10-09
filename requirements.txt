@@ -1,5 +1,11 @@
 # To install these Python dependencies, please type:
 # pip install -r requirements.txt
+tensorflow-gpu==1.14.0
+numpy==1.16.5
+keras
+boto3
+pandas
+scikit-learn
 trimesh
 scikit-image==0.14.2
 natsort

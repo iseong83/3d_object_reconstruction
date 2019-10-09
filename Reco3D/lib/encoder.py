@@ -1,4 +1,5 @@
 import tensorflow as tf
+tf.disable_v2_behavior()
 import numpy as np
 from Reco3D.lib import utils
 from numpy.random import choice

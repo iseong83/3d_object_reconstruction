@@ -1,34 +1,52 @@
-# Insight Project: 3D Object Reconstruction
-This work is for the Insight Project. Many deep learning algorithms use 2.5D images, which including the depth map, to predict 3D. This project uses multiple images with different views to reconstruct 3D image instead of using the depth map. For this, 3D-R2N2 ([paper](http://arxiv.org/abs/1604.00449)) has been used. 
-Since the official source code ([link](https://github.com/chrischoy/3D-R2N2.git)) is implemented Theano, the Tensorflow implementation in [here](https://github.com/micmelesse/3D-reconstruction-with-Neural-Networks.git) has been used for this project. 
+# 3D Object Reconstruction
+This is an open source package to generate 3D voxels of object from 2D images. You can find the slides for this project [here][5].
+The implementation is based on the [3D-R2N2][1] model with integration of the [SE block][2]. This package also leverages an image segmentation tool ([DeepLab][4]) to apply the 3D reconstruction to real images. Since the official source code is implemented in Theano, the Tensorflow implementation in [this github repo][3] is used for this project. 
+<!--
+## Demo
+This project result can be viewed in [here][0]. Note that this demo is running on CPU (m4.xlarge in AWS). 
+-->
+## Installation / Setup
+Clone this repository to a machine with a GPU.
+```
+git clone https://github.com/iseong83/3d_object_reconstruction.git
+cd 3d_object_reconstruction
+```
+Create a virtual environment and install packages
+```
+conda create -n 3d_reco python=3.6 # create a virtual environment
+source activate 3d_reco            # start the virual environment
+python setup.py install            # install this package and requirements
+```
 
-# Week 2
-- [ ] Implement SE-ResNet (do a double check)
-- [ ] Consider to use ShapeNetv2 data (now I'm using ShapeNetv1) 
-- [ ] Make a test script to run the model with test images
-- [ ] Make a more efficient script to obtain mIoU
-- [ ] Add DeepLab inference code in `lib` 
+## Run Inference and Demo Locally
+To run the inference/demo with the trained weights, run following command. It will download and save the model in the `models` directory. Note that the weights are only trained with the ShapeNet `chair` category.
+```
+python scripts/download_model.py
+```
 
-# Week 1
-- [x] Need to add a script to pull data from S3
-
-# How to run
-Followed the framework built in [here](https://github.com/micmelesse/3D-reconstruction-with-Neural-Networks.git). For now, we need to run with the `debug_network` branch. 
-Change the branch
-`git checkout debug_network`
-Install the requiements
+To run the inference of the 3D object reconstruction on ShapeNet data
 ```
-pip install -r requirements.txt
+python tests/inference_3d.py
 ```
-Create directories
+To run the inference on real images
 ```
-sh build/setup_dir.sh
+python demo.py
 ```
-Training parameters are stored in `configs/params.json`. Please check the number of dataset first. Download and preprocess ShapeNet data (chair only) from S3
+![demo](imgs/demo.png)
+## Train the model
+### Setup directories and Download data
+To setup directories (e.g. data), download ShapeNet data (`chair only`), and preprocess data; run
 ```
-sh build/preprocess_dataset.sh
+python scripts/setup_and_preprocess.py
 ```
-To run the training,
+Note that the traning parameters are stored in `configs/params.json`, which includes a setting of the number of data instances to preprocess (`DATASET_SIZE`).   
+To start the training, run
 ```
 python run.py
 ```
+
+[1]: https://arxiv.org/abs/1604.00449
+[2]: https://arxiv.org/abs/1709.01507
+[3]: https://github.com/micmelesse/3D-reconstruction-with-Neural-Networks.git
+[4]: https://arxiv.org/abs/1802.02611
+[5]: http://tiny.cc/DeepNLive3Dslides

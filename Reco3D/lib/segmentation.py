@@ -9,10 +9,14 @@ from matplotlib import pyplot as plt
 import numpy as np
 from PIL import Image, ExifTags
 
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
-model_dict = {'mobile_coco':'mobilenetv2_coco_voctrainaug',
-        'xception_coco': 'xception_coco_voctrainaug'}
+model_dict = {'mobile_coco':'mobilenetv2_coco_voctrainval',
+        'xception_coco': 'xception_coco_voctrainaug',
+        'mobile_ade': 'mobilenetv2_ade20k_train',
+        'exception_ade': 'xception65_ade20k_train'}
 # @param ['mobilenetv2_coco_voctrainaug', 'mobilenetv2_coco_voctrainval', 'xception_coco_voctrainaug', 'xception_coco_voctrainval']
 _DOWNLOAD_URL_PREFIX = 'http://download.tensorflow.org/models/'
 _MODEL_URLS = {
@@ -24,25 +28,32 @@ _MODEL_URLS = {
         'deeplabv3_pascal_train_aug_2018_01_04.tar.gz',
     'xception_coco_voctrainval':
         'deeplabv3_pascal_trainval_2018_01_04.tar.gz',
+    'mobilenetv2_ade20k_train':
+        'deeplabv3_mnv2_ade20k_train_2018_12_03.tar.gz',
+    'xception65_ade20k_train':
+        'deeplabv3_xception_ade20k_train_2018_05_29.tar.gz'
 }
 
 def load_image(fpath):
     try:
         image = Image.open(fpath)
-        for orientation in ExifTags.TAGS.keys() : 
-            if ExifTags.TAGS[orientation]=='Orientation' : break 
-        exif=dict(image._getexif().items())
+        try:
+            for orientation in ExifTags.TAGS.keys() : 
+                if ExifTags.TAGS[orientation]=='Orientation' : break 
+            exif=dict(image._getexif().items())
 
-        if   exif[orientation] == 3 : 
-            image=image.rotate(180, expand=True)
-        elif exif[orientation] == 6 : 
-            image=image.rotate(270, expand=True)
-        elif exif[orientation] == 8 : 
-            image=image.rotate(90, expand=True)
+            if   exif[orientation] == 3 : 
+                image=image.rotate(180, expand=True)
+            elif exif[orientation] == 6 : 
+                image=image.rotate(270, expand=True)
+            elif exif[orientation] == 8 : 
+                image=image.rotate(90, expand=True)
+        except AttributeError:
+            pass
 
         return image
     except IOError:
-        print ("Cannot open the image file")
+        print ("Cannot open the image file:", fpath)
         return
 
 def run_visualization_file(fpath, model):
@@ -85,7 +96,8 @@ def vis_segmentation(image, seg_map):
 
   image = np.array(image)
   mask = np.repeat(seg_map[:,:,np.newaxis],3,axis=2)
-  object = np.where(mask>0, image, 255)
+  #object = np.where(mask>0, image, 255)
+  object = np.where(mask==9, image, 255)
 
   plt.subplot(grid_spec[0])
   plt.imshow(image)

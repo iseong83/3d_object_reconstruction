@@ -17,6 +17,7 @@ from sklearn import model_selection
 from keras.utils import to_categorical
 from numpy.random import randint, permutation, shuffle
 from natsort import natsorted
+from skimage.transform import resize
 import boto3
 
 
@@ -31,15 +32,28 @@ def id_to_path(obj_id, data_dir="./data/ShapeNetRendering/", label_dir="./data/S
     ret_2 = os.path.join(label_dir, regex.group(1), regex.group(2))
     return ret_1, ret_2
 
+def resize_img(img):
+    max_size = max(img.size)
+    ratio = 137/max_size
+    size = tuple([int(x*ratio) for x in img.size])
+    img.thumbnail(size,Image.ANTIALIAS)
+
 
 # loading functions
 def load_img(img_path):
-    return np.array(Image.open(img_path))
+    img = Image.open(img_path)
+    if img.size != (137, 137, 137):
+        resize_img(img)
+    return np.array(img)
 
 
 def load_vox(vox_path):
     with open(vox_path, 'rb') as f:
-        return to_categorical(binvox_rw.read_as_3d_array(f).data)
+        voxel = binvox_rw.read_as_3d_array(f).data
+        #if False:
+        #if np.shape(voxel) != (32, 32, 32):
+        #    voxel = resize(voxel, (32, 32, 32), anti_aliasing=True,anti_aliasing_sigma=0.01)>0
+        return to_categorical(voxel)
 
 
 def load_imgs(img_path_list):
@@ -81,6 +95,22 @@ def load_label(label_samples):
     if isinstance(label_samples, str):
         label_samples = [label_samples]
     return np.squeeze(load_voxs(label_samples))
+
+def load_data_Pix3D():
+    ''' Read Pix3D data. This dataset includes real imageas and binvox'''
+    data_path = utils.read_params()['DIRS']['DATA_PIX3D']
+    data_all = sorted(construct_file_path_list_from_dir(data_path, ['_x.npy']))
+    label_all = sorted(construct_file_path_list_from_dir(data_path, ['_y.npy']))
+
+    return np.array(data_all), np.array(label_all)
+
+def load_random_data_Pix3D():
+    data, label = load_data_Pix3D()
+    while True:
+        i = np.random.randint(0, len(data))
+        data_np, label_np = np.load(data[i]), np.load(label[i])
+        if data_np.shape[-1] == 3:
+            return data_np, label_np
 
 
 # load preprocessed data and labels
@@ -144,10 +174,8 @@ def setup_dir():
     params = utils.read_params()
     DIR = params["DIRS"]
     for d in DIR.values():
+        if 'ikea' in d: continue
         utils.make_dir(d)
-
-    # IS: seems not necessary
-    #utils.check_params_json("params.json")
 
 
 def construct_file_path_list_from_dir(dir, file_filter):
@@ -191,6 +219,8 @@ def create_path_csv(data_dir, label_dir):
         data_row = [os.path.dirname(n)+"_"+os.path.basename(n)]
         data_row += construct_file_path_list_from_dir(d, [".png"])
         data_row += construct_file_path_list_from_dir(l, [".binvox"])
+        if not construct_file_path_list_from_dir(l, [".binvox"]):
+            continue
         table.append(data_row)
 
     paths = pd.DataFrame(table)
@@ -237,7 +267,7 @@ def prepare_dataset():
         os.system("tar -xvzf {0} -C ./data/".format(archive))
 
 
-def preprocess_dataset():
+def preprocess_dataset(is_high_res=False):
     params = utils.read_params()
     dataset_size = params["DATASET_SIZE"]
     output_dir = params["DIRS"]["OUTPUT"]
@@ -245,8 +275,12 @@ def preprocess_dataset():
     data_dir = params["DIRS"]["DATA"]
 
     if not os.path.isfile("{}/paths.csv".format(output_dir)):
-        dataset.create_path_csv(
-            "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox32".format(data_dir))
+        if is_high_res:
+            dataset.create_path_csv(
+                "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox64".format(data_dir))
+        else:
+            dataset.create_path_csv(
+                "{}/ShapeNetRendering".format(data_dir), "{}/ShapeNetVox32".format(data_dir))
 
     path_list = pd.read_csv(
         "{}/paths.csv".format(output_dir), index_col=0).as_matrix()

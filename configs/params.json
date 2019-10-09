@@ -1,9 +1,9 @@
 {
     "MODE": "TRAIN",
-    "DATASET_SIZE": 4,
+    "DATASET_SIZE": 100,
     "TRAIN": {
-        "BATCH_SIZE": 3,
-        "EPOCH_COUNT": 2,
+        "BATCH_SIZE": 8,
+        "EPOCH_COUNT": 1,
         "TIME_STEP_COUNT": 5,
         "OPTIMIZER": "ADAM",
         "GD_LEARN_RATE": 0.1,
@@ -16,25 +16,26 @@
         "DECODER_MODE": "SERESNET",
         "RNN_MODE": "GRU",
         "RNN_HIDDEN_SIZE": 128,
-        "RNN_CELL_NUM": 4
+        "RNN_CELL_NUM": 4,
+	"LOSS_FCN": "SOFTMAX"
     },
     "DIRS": {
         "DATA": "data",
         "DATA_PREPROCESSED": "data_preprocessed",
         "OUTPUT": "output",
-        "MODELS_LOCAL": "models_local",
-        "MODELS_REMOTE": "models_remote"
+        "MODELS_LOCAL": "models",
+	"DATA_PIX3D": "data_preprocessed_ikea_testset"
     },
     "VIS": {
-        "VALIDATION_STEP": true,
+        "VALIDATION_STEP": false,
         "HISTOGRAMS": false,
         "FEATURE_MAPS": false,
         "FEATURE_VOXELS": false,
         "VOXEL_SLICES": false,
         "KERNELS": false,
         "SHAPES": true,
-        "ENCODER_PROCESS": true,
-        "DECODER_PROCESS": true,
+        "ENCODER_PROCESS": false,
+        "DECODER_PROCESS": false,
         "IMAGE_COUNT": 1
     },
     "MISC": {
@@ -44,7 +45,7 @@
     },
     "SESSIONS": {
         "ROBUST": "",
-        "LONGEST": "models_local/model_2019-09-15_22:25:37/epoch_153",
+        "LONGEST": "",
         "BEST": "",
         "LSTM": "",
         "HISTOGRAM": "",
