@@ -16,7 +16,7 @@ def main():
         print ('{} exit. Please check'.format(archive))
         sys.exit(1)
     download_models()
-    os.system("tar -xvzf {0} -C {1}".format(os.path.join(MODEL_DIR,archive), MODEL_DIR))
+    os.system("tar -xvf {0} -C {1}".format(os.path.join(MODEL_DIR,archive), MODEL_DIR))
 
 
 if __name__ == '__main__':

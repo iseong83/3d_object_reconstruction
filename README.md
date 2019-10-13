@@ -13,7 +13,7 @@ cd 3d_object_reconstruction
 ```
 Create a virtual environment and install packages
 ```
-conda create -n 3d_reco python=3.6 # create a virtual environment
+conda create -n 3d_reco python=3.7 # create a virtual environment
 source activate 3d_reco            # start the virual environment
 python setup.py install            # install this package and requirements
 ```
