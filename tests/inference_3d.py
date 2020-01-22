@@ -87,6 +87,11 @@ def main():
     if test or random_data:
         vis.voxel_binary(Y)
     print (np.shape(out))
+    out = out[0]
+    bg = out[:,:,:0]
+    fg = out[:,:,:1]
+    fg[fg<0.3] = 0
+    out = np.stack([bg,fg],axis=-1)
     vis.voxel_binary(out[0])
     plt.show()
 
