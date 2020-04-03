@@ -3,8 +3,10 @@ import sys
 
 MODEL_DIR = './models'
 def download_models():
-    LINK = 'https://shapenetv1.s3-us-west-2.amazonaws.com/model/model.tar'
-    os.system('wget -c {0} -P {1}'.format(LINK, MODEL_DIR))
+    #LINK = 'https://shapenetv1.s3-us-west-2.amazonaws.com/model/model.tar'
+    #os.system('wget -c {0} -P {1}'.format(LINK, MODEL_DIR))
+    LINK = 'https://drive.google.com/uc?id=1XeguEZ2aXDaGzqtZNWYAtTzPEfR8Efr3'
+    os.system("gdown '{0}' -O {1}".format(LINK, os.path.join(MODEL_DIR,'model.tar')))
 
 
 
